@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{Error, Result};
+use comp::{lexer::Lexer, Error, Result};
 
 /// C Compiler
 #[derive(Parser, Debug)]
@@ -46,15 +46,23 @@ fn preprocess(file: &str) -> Result<()> {
     Ok(())
 }
 
-fn compile(file: &str) -> Result<()> {
+fn compile(file: &str, cli: &Cli) -> Result<()> {
+    let source = fs::read_to_string(format!("{file}.i"))
+        .map_err(|e| Error::IO(format!("Couldn't read file `{file}`:\n - {e}")))?;
+    let mut lexer = Lexer::new(&source);
+    lexer.tokenize()?;
+    println!("{:?}", lexer.tokens);
+    if cli.lex {
+        return Ok(());
+    }
     // temp "stub out"
-    let output = Command::new("gcc")
-        .args(["-S", &format!("{file}.i"), "-o", "-"])
-        .output()
-        .unwrap();
-
-    fs::write(format!("{file}.s"), output.stdout)
-        .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
+    // let output = Command::new("gcc")
+    //     .args(["-S", &format!("{file}.i"), "-o", "-"])
+    //     .output()
+    //     .unwrap();
+    //
+    // fs::write(format!("{file}.s"), output.stdout)
+    //     .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
     Ok(())
 }
 
@@ -75,9 +83,9 @@ fn assemble(file: &str) -> Result<()> {
 
 fn run(file: &str, cli: &Cli) -> Result<()> {
     preprocess(&file)?;
-    compile(&file)?;
+    compile(&file, cli)?;
     let _ = fs::remove_file(format!("{file}.i"));
-    if cli.assembly {
+    if cli.assembly || cli.lex || cli.parse || cli.code_gen {
         return Ok(());
     }
     let _ = fs::remove_file(format!("{file}.s"));
@@ -94,9 +102,11 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             match err {
-                Error::IO(err) => println!("System IO Error:\n - {err}"),
-                Error::Preprocess(err) => println!("Preprocessor Error:\n - {err}"),
-                Error::Assemble(err) => println!("Assembling Error:\n - {err}"),
+                Error::IO(err) => eprintln!("System IO Error:\n - {err}"),
+                Error::Preprocess(err) => eprintln!("Preprocessor Error:\n - {err}"),
+                Error::Assemble(err) => eprintln!("Assembling Error:\n - {err}"),
+                Error::Lexer(err) => eprintln!("Lexer Error:\n - {err}"),
+                Error::InvalidToken(err) => eprintln!("Invalid Token:\n {err}"),
             };
             let _ = fs::remove_file(format!("{file}.i"));
             let _ = fs::remove_file(format!("{file}.s"));
