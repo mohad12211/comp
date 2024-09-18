@@ -88,14 +88,14 @@ fn assemble(file: &str) -> Result<()> {
 }
 
 fn run(file: &str, cli: &Cli) -> Result<()> {
-    preprocess(&file)?;
-    compile(&file, cli)?;
+    preprocess(file)?;
+    compile(file, cli)?;
     let _ = fs::remove_file(format!("{file}.i"));
     if cli.assembly || cli.lex || cli.parse || cli.code_gen {
         return Ok(());
     }
     let _ = fs::remove_file(format!("{file}.s"));
-    assemble(&file)?;
+    assemble(file)?;
     Ok(())
 }
 

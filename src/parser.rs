@@ -44,7 +44,7 @@ impl<'de> Parser<'de> {
     }
     pub fn parse(&mut self) -> Result<Program<'de>, ParseError> {
         let program = self.program()?;
-        if let Some(token) = self.tokens.get(0) {
+        if let Some(token) = self.tokens.first() {
             Err(ParseError::UnexpectedToken {
                 expected: None,
                 got: Some(token.kind),
@@ -72,7 +72,7 @@ impl<'de> Parser<'de> {
     }
 
     fn expect(&mut self, expected: TokenKind) -> Result<Token<'de>, ParseError> {
-        let token = self.tokens.get(0);
+        let token = self.tokens.first();
         if token.is_some_and(|token| token.kind == expected) {
             self.tokens = &self.tokens[1..];
             Ok(token.copied().expect("if condition 'is some' is true"))
@@ -80,12 +80,9 @@ impl<'de> Parser<'de> {
             Err(ParseError::UnexpectedToken {
                 expected: Some(expected),
                 got: token.map(|token| token.kind),
-                line: token.map(|token| token.line).unwrap_or(
-                    self.lexer
-                        .tokens
-                        .last()
-                        .map(|token| token.line)
-                        .unwrap_or(0),
+                line: token.map_or(
+                    self.lexer.tokens.last().map_or(0, |token| token.line),
+                    |token| token.line,
                 ),
             })
         }
