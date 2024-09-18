@@ -103,11 +103,10 @@ impl<'de> Parser<'de> {
     }
 
     fn int(&mut self) -> Result<i32, ParseError> {
-        let token = self.expect(TokenKind::Constant)?;
-        let value = token
+        Ok(self
+            .expect(TokenKind::Constant)?
             .lexeme
             .parse()
-            .expect("Lexer should only parse valid integers");
-        Ok(value)
+            .expect("Lexer should only parse valid integers"))
     }
 }
