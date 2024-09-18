@@ -5,10 +5,10 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{lexer::Lexer, Error, Result};
+use comp::{lexer::Lexer, parser, Error, Result};
 
 /// C Compiler
-#[derive(Parser, Debug)]
+#[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
     /// Only run the lexer
@@ -53,6 +53,12 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     lexer.tokenize()?;
     println!("{:?}", lexer.tokens);
     if cli.lex {
+        return Ok(());
+    }
+    let mut parser = parser::Parser::new(&lexer.tokens);
+    let program = parser.parse()?;
+    println!("{program:#?}");
+    if cli.parse {
         return Ok(());
     }
     // temp "stub out"
@@ -107,6 +113,7 @@ fn main() -> ExitCode {
                 Error::Assemble(err) => eprintln!("Assembling Error:\n - {err}"),
                 Error::Lexer(err) => eprintln!("Lexer Error:\n - {err}"),
                 Error::InvalidToken(err) => eprintln!("Invalid Token:\n {err}"),
+                Error::Parser(parse_error) => eprintln!("Parser Error:\n {parse_error:?}"),
             };
             let _ = fs::remove_file(format!("{file}.i"));
             let _ = fs::remove_file(format!("{file}.s"));

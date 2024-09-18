@@ -18,7 +18,7 @@ pub enum TokenKind {
     Return,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Token<'de> {
     pub kind: TokenKind,
     pub lexeme: &'de str,
