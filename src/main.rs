@@ -55,7 +55,7 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     if cli.lex {
         return Ok(());
     }
-    let mut parser = parser::Parser::new(&lexer.tokens);
+    let mut parser = parser::Parser::new(&lexer);
     let program = parser.parse()?;
     println!("{program:#?}");
     if cli.parse {
@@ -112,8 +112,8 @@ fn main() -> ExitCode {
                 Error::Preprocess(err) => eprintln!("Preprocessor Error:\n - {err}"),
                 Error::Assemble(err) => eprintln!("Assembling Error:\n - {err}"),
                 Error::Lexer(err) => eprintln!("Lexer Error:\n - {err}"),
-                Error::InvalidToken(err) => eprintln!("Invalid Token:\n {err}"),
-                Error::Parser(parse_error) => eprintln!("Parser Error:\n {parse_error:?}"),
+                Error::InvalidToken(err) => eprintln!("Invalid Token:\n - {err}"),
+                Error::Parser(parse_error) => eprintln!("Parser Error:\n - {parse_error}"),
             };
             let _ = fs::remove_file(format!("{file}.i"));
             let _ = fs::remove_file(format!("{file}.s"));

@@ -1,5 +1,8 @@
+use std::fmt::Display;
+
 use crate::{
     ast::{Expr, Function, Program, Stmt},
+    lexer::Lexer,
     token::{Token, TokenKind},
 };
 
@@ -8,16 +11,36 @@ pub enum ParseError {
     UnexpectedToken {
         expected: Option<TokenKind>,
         got: Option<TokenKind>,
+        line: usize,
     },
+}
+impl Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO: not good error reporting
+        match self {
+            ParseError::UnexpectedToken {
+                expected,
+                got,
+                line,
+            } => write!(
+                f,
+                "Unexpected token at line: {line}, got: {got:?}, expected: {expected:?}"
+            ),
+        }
+    }
 }
 
 pub struct Parser<'de> {
+    lexer: &'de Lexer<'de>,
     tokens: &'de [Token<'de>],
 }
 
 impl<'de> Parser<'de> {
-    pub fn new(tokens: &'de [Token<'de>]) -> Self {
-        Self { tokens }
+    pub fn new(lexer: &'de Lexer) -> Self {
+        Self {
+            lexer,
+            tokens: &lexer.tokens,
+        }
     }
     pub fn parse(&mut self) -> Result<Program<'de>, ParseError> {
         let program = self.program()?;
@@ -25,6 +48,7 @@ impl<'de> Parser<'de> {
             Err(ParseError::UnexpectedToken {
                 expected: None,
                 got: Some(token.kind),
+                line: token.line,
             })
         } else {
             Ok(program)
@@ -56,6 +80,13 @@ impl<'de> Parser<'de> {
             Err(ParseError::UnexpectedToken {
                 expected: Some(expected),
                 got: token.map(|token| token.kind),
+                line: token.map(|token| token.line).unwrap_or(
+                    self.lexer
+                        .tokens
+                        .last()
+                        .map(|token| token.line)
+                        .unwrap_or(0),
+                ),
             })
         }
     }
