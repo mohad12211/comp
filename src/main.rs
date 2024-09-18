@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{lexer::Lexer, parser, Error, Result};
+use comp::{code_gen, lexer::Lexer, parser, Error, Result};
 
 /// C Compiler
 #[derive(clap::Parser, Debug)]
@@ -20,7 +20,7 @@ struct Cli {
     parse: bool,
 
     /// Only run the lexer, the parser, and assembly generation, stop before code emission
-    #[arg(short, long = "code-gen")]
+    #[arg(short, long = "codegen")]
     code_gen: bool,
 
     /// Only emit assembly file
@@ -59,6 +59,11 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     let program = parser.parse()?;
     println!("{program:#?}");
     if cli.parse {
+        return Ok(());
+    }
+    let code_gen = code_gen::gen_program(program);
+    println!("{code_gen:?}");
+    if cli.code_gen {
         return Ok(());
     }
     // temp "stub out"

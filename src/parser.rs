@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{Expr, Function, Program, Stmt},
+    ast,
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -42,7 +42,7 @@ impl<'de> Parser<'de> {
             tokens: &lexer.tokens,
         }
     }
-    pub fn parse(&mut self) -> Result<Program<'de>, ParseError> {
+    pub fn parse(&mut self) -> Result<ast::Program<'de>, ParseError> {
         let program = self.program()?;
         if let Some(token) = self.tokens.first() {
             Err(ParseError::UnexpectedToken {
@@ -55,11 +55,11 @@ impl<'de> Parser<'de> {
         }
     }
 
-    fn program(&mut self) -> Result<Program<'de>, ParseError> {
-        Ok(Program::Function(self.function()?))
+    fn program(&mut self) -> Result<ast::Program<'de>, ParseError> {
+        Ok(ast::Program::Function(self.function()?))
     }
 
-    fn function(&mut self) -> Result<Function<'de>, ParseError> {
+    fn function(&mut self) -> Result<ast::Function<'de>, ParseError> {
         self.expect(TokenKind::Int)?;
         let name = self.expect(TokenKind::Identifier)?;
         self.expect(TokenKind::LeftParen)?;
@@ -68,7 +68,7 @@ impl<'de> Parser<'de> {
         self.expect(TokenKind::LeftBrace)?;
         let body = self.statement()?;
         self.expect(TokenKind::RightBrace)?;
-        Ok(Function { name, body })
+        Ok(ast::Function { name, body })
     }
 
     fn expect(&mut self, expected: TokenKind) -> Result<Token<'de>, ParseError> {
@@ -88,15 +88,15 @@ impl<'de> Parser<'de> {
         }
     }
 
-    fn statement(&mut self) -> Result<Stmt, ParseError> {
+    fn statement(&mut self) -> Result<ast::Stmt, ParseError> {
         self.expect(TokenKind::Return)?;
         let return_value = self.expression()?;
         self.expect(TokenKind::Semicolon)?;
-        Ok(Stmt::Return(return_value))
+        Ok(ast::Stmt::Return(return_value))
     }
 
-    fn expression(&mut self) -> Result<Expr, ParseError> {
-        Ok(Expr::Constant(self.int()?))
+    fn expression(&mut self) -> Result<ast::Expr, ParseError> {
+        Ok(ast::Expr::Constant(self.int()?))
     }
 
     fn int(&mut self) -> Result<i32, ParseError> {
