@@ -4,7 +4,6 @@ use crate::{
 };
 
 pub struct Lexer<'de> {
-    source: &'de str,
     pub tokens: Vec<Token<'de>>,
     rest: &'de str,
     line: usize,
@@ -13,7 +12,6 @@ pub struct Lexer<'de> {
 impl<'de> Lexer<'de> {
     pub fn new(source: &'de str) -> Self {
         Self {
-            source,
             tokens: Vec::new(),
             rest: source,
             line: 1,
@@ -35,34 +33,34 @@ impl<'de> Lexer<'de> {
             .expect("rest shouldn't be empty from self.tokenize condition");
         match char {
             char if char.is_alphabetic() => {
-                if let Some(end) = self.rest.find(|c: char| !c.is_alphabetic()) {
-                    let lexeme = &self.rest[..end];
-                    self.add_token(
-                        Self::get_keyword(lexeme).unwrap_or(TokenKind::Identifier),
-                        end,
-                    );
-                } else {
-                    return Err(Error::Lexer(format!(
-                        "Unfinsiehd Identifier at line {}",
+                let end = self
+                    .rest
+                    .find(|c: char| !c.is_alphabetic())
+                    .ok_or(Error::Lexer(format!(
+                        "Unfinsiehd identifier at line {}",
                         self.line
-                    )));
-                }
+                    )))?;
+                let lexeme = &self.rest[..end];
+                self.add_token(
+                    Self::get_keyword(lexeme).unwrap_or(TokenKind::Identifier),
+                    end,
+                );
             }
             char if char.is_ascii_digit() => {
-                if let Some(end) = self.rest.find(|c: char| !c.is_ascii_digit()) {
-                    self.add_token(TokenKind::Constant, end);
-                    if self.rest.starts_with(|c: char| c.is_alphabetic()) {
-                        return Err(Error::Lexer(format!(
-                            "Invalid identifer at line {}",
-                            self.line
-                        )));
-                    }
-                } else {
-                    return Err(Error::Lexer(format!(
+                let end = self
+                    .rest
+                    .find(|c: char| !c.is_ascii_digit())
+                    .ok_or(Error::Lexer(format!(
                         "Invalid number at line {}",
                         self.line
+                    )))?;
+                self.add_token(TokenKind::Constant, end);
+                if self.rest.starts_with(|c: char| c.is_alphabetic()) {
+                    return Err(Error::Lexer(format!(
+                        "Invalid identifer at line {}",
+                        self.line
                     )));
-                }
+                };
             }
             '(' => self.add_token(TokenKind::LeftParen, char.len_utf8()),
             ')' => self.add_token(TokenKind::RightParen, char.len_utf8()),
