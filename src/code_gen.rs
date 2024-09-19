@@ -16,6 +16,7 @@ fn gen_function(function: ast::Function) -> asm_ast::Function {
 fn gen_expr(expr: ast::Expr) -> asm_ast::Operand {
     match expr {
         ast::Expr::Constant(value) => asm_ast::Operand::Imm(value),
+        ast::Expr::UnaryOp { operator, right } => todo!(),
     }
 }
 

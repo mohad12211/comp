@@ -6,17 +6,21 @@ pub enum Program<'a> {
 }
 
 #[derive(Debug)]
-pub enum Expr {
+pub enum Expr<'a> {
     Constant(i32),
+    UnaryOp {
+        operator: Token<'a>,
+        right: Box<Expr<'a>>,
+    },
 }
 
 #[derive(Debug)]
-pub enum Stmt {
-    Return(Expr),
+pub enum Stmt<'a> {
+    Return(Expr<'a>),
 }
 
 #[derive(Debug)]
 pub struct Function<'a> {
     pub name: Token<'a>,
-    pub body: Stmt,
+    pub body: Stmt<'a>,
 }
