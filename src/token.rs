@@ -7,6 +7,9 @@ pub enum TokenKind {
     LeftBrace,
     RightBrace,
     Semicolon,
+    Tilde,
+    Hyphen,
+    DoubleHyphen,
 
     // Literals.
     Identifier,

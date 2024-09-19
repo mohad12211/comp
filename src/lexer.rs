@@ -67,6 +67,14 @@ impl<'de> Lexer<'de> {
             '{' => self.add_token(TokenKind::LeftBrace, char.len_utf8()),
             '}' => self.add_token(TokenKind::RightBrace, char.len_utf8()),
             ';' => self.add_token(TokenKind::Semicolon, char.len_utf8()),
+            '~' => self.add_token(TokenKind::Tilde, char.len_utf8()),
+            '-' => {
+                if self.rest.chars().nth(1).is_some_and(|c| c == '-') {
+                    self.add_token(TokenKind::DoubleHyphen, char.len_utf8() * 2);
+                } else {
+                    self.add_token(TokenKind::Hyphen, char.len_utf8());
+                }
+            }
             ' ' | '\t' => self.rest = &self.rest[char.len_utf8()..],
             '\n' => {
                 self.line += 1;
