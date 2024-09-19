@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{code_gen, lexer::Lexer, parser, Error, Result};
+use comp::{code_emission, code_gen, lexer::Lexer, parser, Error, Result};
 
 /// C Compiler
 #[derive(clap::Parser, Debug)]
@@ -51,29 +51,21 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
         .map_err(|e| Error::IO(format!("Couldn't read file `{file}`:\n - {e}")))?;
     let mut lexer = Lexer::new(&source);
     lexer.tokenize()?;
-    println!("{:?}", lexer.tokens);
     if cli.lex {
         return Ok(());
     }
     let mut parser = parser::Parser::new(&lexer);
     let program = parser.parse()?;
-    println!("{program:#?}");
     if cli.parse {
         return Ok(());
     }
-    let code_gen = code_gen::gen_program(program);
-    println!("{code_gen:?}");
+    let asm_program = code_gen::gen_program(program);
     if cli.code_gen {
         return Ok(());
     }
-    // temp "stub out"
-    // let output = Command::new("gcc")
-    //     .args(["-S", &format!("{file}.i"), "-o", "-"])
-    //     .output()
-    //     .unwrap();
-    //
-    // fs::write(format!("{file}.s"), output.stdout)
-    //     .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
+    let assembly = code_emission::emit_program(asm_program);
+    fs::write(format!("{file}.s"), assembly)
+        .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
     Ok(())
 }
 
@@ -99,8 +91,8 @@ fn run(file: &str, cli: &Cli) -> Result<()> {
     if cli.assembly || cli.lex || cli.parse || cli.code_gen {
         return Ok(());
     }
-    let _ = fs::remove_file(format!("{file}.s"));
     assemble(file)?;
+    let _ = fs::remove_file(format!("{file}.s"));
     Ok(())
 }
 

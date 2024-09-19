@@ -2,6 +2,7 @@ use parser::ParseError;
 
 pub mod asm_ast;
 pub mod ast;
+pub mod code_emission;
 pub mod code_gen;
 pub mod lexer;
 pub mod parser;
