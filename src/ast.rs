@@ -8,7 +8,7 @@ pub enum Program<'a> {
 #[derive(Debug)]
 pub enum Expr<'a> {
     Constant(i32),
-    UnaryOp {
+    Unary {
         operator: Token<'a>,
         right: Box<Expr<'a>>,
     },

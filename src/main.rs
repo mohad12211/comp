@@ -5,27 +5,31 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{code_emission, code_gen, lexer::Lexer, parser, Error, Result};
+use comp::{code_emission, code_gen, irc_gen::IrcGenerator, lexer::Lexer, parser, Error, Result};
 
 /// C Compiler
 #[derive(clap::Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    /// Only run the lexer
+    /// Stop after lexing
     #[arg(short, long)]
     lex: bool,
 
-    /// Only run the lexer and the parser
+    /// Stop after parsing
     #[arg(short, long)]
     parse: bool,
 
-    /// Only run the lexer, the parser, and assembly generation, stop before code emission
+    /// Stop after code gen
     #[arg(short, long = "codegen")]
     code_gen: bool,
 
-    /// Only emit assembly file
+    /// Stop after generating assembly
     #[arg(short = 'S', long)]
     assembly: bool,
+
+    /// Stop after generating irc
+    #[arg(short, long, alias = "tacky")]
+    irc: bool,
 
     /// C source code file
     #[arg(required = true)]
@@ -59,13 +63,18 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     if cli.parse {
         return Ok(());
     }
-    let asm_program = code_gen::gen_program(program);
-    if cli.code_gen {
+    let irc_program = IrcGenerator::gen_program(program);
+    println!("{irc_program:?}");
+    if cli.irc {
         return Ok(());
     }
-    let assembly = code_emission::emit_program(asm_program);
-    fs::write(format!("{file}.s"), assembly)
-        .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
+    // let asm_program = code_gen::gen_program(program);
+    // if cli.code_gen {
+    //     return Ok(());
+    // }
+    // let assembly = code_emission::emit_program(asm_program);
+    // fs::write(format!("{file}.s"), assembly)
+    //     .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
     Ok(())
 }
 
@@ -88,7 +97,7 @@ fn run(file: &str, cli: &Cli) -> Result<()> {
     preprocess(file)?;
     compile(file, cli)?;
     let _ = fs::remove_file(format!("{file}.i"));
-    if cli.assembly || cli.lex || cli.parse || cli.code_gen {
+    if cli.assembly || cli.lex || cli.parse || cli.code_gen || cli.irc {
         return Ok(());
     }
     assemble(file)?;

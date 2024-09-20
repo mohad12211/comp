@@ -111,7 +111,7 @@ impl<'de> Parser<'de> {
             Some(TokenKind::Tilde) | Some(TokenKind::Hyphen) => {
                 let operator = self.consume();
                 let right = self.expression()?.into();
-                Ok(Expr::UnaryOp { operator, right })
+                Ok(Expr::Unary { operator, right })
             }
             Some(TokenKind::LeftParen) => {
                 self.expect(TokenKind::LeftParen)?;
