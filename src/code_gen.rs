@@ -1,3 +1,5 @@
+use std::iter;
+
 use crate::{asm_ast, irc};
 
 pub fn gen_program(program: irc::Program) -> asm_ast::Program {
@@ -54,5 +56,58 @@ fn gen_operator(operator: irc::UnaryOp) -> asm_ast::UnaryOp {
     match operator {
         irc::UnaryOp::Complement => asm_ast::UnaryOp::Not,
         irc::UnaryOp::Negate => asm_ast::UnaryOp::Neg,
+    }
+}
+
+pub fn replace_pseudo(program: &mut asm_ast::Program) {
+    match program {
+        asm_ast::Program::Function(function) => {
+            function.instructons.iter_mut().for_each(|ins| match ins {
+                asm_ast::Instruction::Mov { src, dst } => {
+                    replace_operand(src);
+                    replace_operand(dst);
+                }
+                asm_ast::Instruction::Unary {
+                    operator: _,
+                    operand,
+                } => replace_operand(operand),
+                _ => {}
+            });
+        }
+    }
+}
+
+pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: i32) {
+    match program {
+        asm_ast::Program::Function(function) => {
+            function.instructons =
+                iter::once(asm_ast::Instruction::AllocateStack(stack_allocation))
+                    .chain(function.instructons.iter().flat_map(|ins| match ins {
+                        asm_ast::Instruction::Mov {
+                            src: asm_ast::Operand::Stack(src),
+                            dst: asm_ast::Operand::Stack(dst),
+                        } => vec![
+                            asm_ast::Instruction::Mov {
+                                src: asm_ast::Operand::Stack(*src),
+                                dst: asm_ast::Operand::Register(asm_ast::Register::R10),
+                            },
+                            asm_ast::Instruction::Mov {
+                                src: asm_ast::Operand::Register(asm_ast::Register::R10),
+                                dst: asm_ast::Operand::Stack(*dst),
+                            },
+                        ],
+                        _ => vec![*ins],
+                    }))
+                    .collect();
+        }
+    }
+}
+
+fn replace_operand(operand: &mut asm_ast::Operand) {
+    match operand {
+        asm_ast::Operand::Pseudo(counter) => {
+            *operand = asm_ast::Operand::Stack((*counter + 1) as i32 * -4)
+        }
+        _ => {}
     }
 }

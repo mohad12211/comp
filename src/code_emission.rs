@@ -35,6 +35,8 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
                 dst = emit_operand(dst)
             ),
             Instruction::Return => "ret".to_string(),
+            Instruction::Unary { operator, operand } => todo!(),
+            Instruction::AllocateStack(_) => todo!(),
         })
         .collect::<Vec<String>>()
         .join("\n    ")
@@ -43,6 +45,8 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
 fn emit_operand(operand: &Operand) -> String {
     match operand {
         Operand::Imm(value) => format!("${value}"),
-        Operand::Register => "%eax".to_string(),
+        Operand::Register(_) => "%eax".to_string(),
+        Operand::Pseudo(_) => todo!(),
+        Operand::Stack(_) => todo!(),
     }
 }

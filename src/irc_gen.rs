@@ -6,13 +6,16 @@ pub struct IrcGenerator {
 }
 
 impl IrcGenerator {
-    pub fn gen_program<'a>(program: ast::Program<'a>) -> irc::Program<'a> {
+    pub fn gen_program<'a>(program: ast::Program<'a>) -> (irc::Program<'a>, i32) {
         let mut irc_generator = IrcGenerator::default();
-        match program {
-            ast::Program::Function(function) => {
-                irc::Program::Function(irc_generator.gen_function(function))
-            }
-        }
+        (
+            match program {
+                ast::Program::Function(function) => {
+                    irc::Program::Function(irc_generator.gen_function(function))
+                }
+            },
+            (irc_generator.counter + 1) as i32 * -4,
+        )
     }
 
     fn gen_function<'a>(&mut self, function: ast::Function<'a>) -> irc::Function<'a> {
@@ -48,8 +51,8 @@ impl IrcGenerator {
         match stmt {
             ast::Stmt::Return(expr) => {
                 let mut instructions = Vec::new();
-                self.gen_expr(&expr, &mut instructions);
-                instructions.push(irc::Instruction::Ret(irc::Value::Var(self.counter)));
+                let value = self.gen_expr(&expr, &mut instructions);
+                instructions.push(irc::Instruction::Ret(value));
                 return instructions;
             }
         }

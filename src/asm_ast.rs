@@ -11,7 +11,7 @@ pub enum Register {
     R10,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum UnaryOp {
     Neg,
     Not,
@@ -25,7 +25,7 @@ pub enum Operand {
     Stack(i32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     Mov { src: Operand, dst: Operand },
     Return,
