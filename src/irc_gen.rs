@@ -7,14 +7,14 @@ pub struct IrcGenerator {
 
 impl IrcGenerator {
     pub fn gen_program<'a>(program: ast::Program<'a>) -> (irc::Program<'a>, i32) {
-        let mut irc_generator = IrcGenerator::default();
+        let mut irc_generator = IrcGenerator { counter: 1 };
         (
             match program {
                 ast::Program::Function(function) => {
                     irc::Program::Function(irc_generator.gen_function(function))
                 }
             },
-            (irc_generator.counter + 1) as i32 * -4,
+            (irc_generator.counter - 1) as i32 * 4,
         )
     }
 

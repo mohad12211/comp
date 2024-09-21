@@ -106,7 +106,7 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: i32) {
 fn replace_operand(operand: &mut asm_ast::Operand) {
     match operand {
         asm_ast::Operand::Pseudo(counter) => {
-            *operand = asm_ast::Operand::Stack((*counter + 1) as i32 * -4)
+            *operand = asm_ast::Operand::Stack((*counter) as i32 * -4)
         }
         _ => {}
     }

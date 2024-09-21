@@ -59,25 +59,23 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
         return Ok(());
     }
     let mut parser = parser::Parser::new(&lexer);
-    let program = parser.parse()?;
+    let ast_program = parser.parse()?;
     if cli.parse {
         return Ok(());
     }
-    let (irc_program, stack_allocation) = IrcGenerator::gen_program(program);
+    let (irc_program, stack_allocation) = IrcGenerator::gen_program(ast_program);
     if cli.irc {
         return Ok(());
     }
-    println!("{irc_program:?}");
     let mut asm_program = code_gen::gen_program(irc_program);
     code_gen::replace_pseudo(&mut asm_program);
     code_gen::fix_instructions(&mut asm_program, stack_allocation);
-    println!("{asm_program:?}");
     if cli.code_gen {
         return Ok(());
     }
-    // let assembly = code_emission::emit_program(asm_program);
-    // fs::write(format!("{file}.s"), assembly)
-    //     .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
+    let assembly = code_emission::emit_program(asm_program);
+    fs::write(format!("{file}.s"), assembly)
+        .map_err(|e| Error::IO(format!("Couldn't write file '{file}.s': - {e}")))?;
     Ok(())
 }
 
