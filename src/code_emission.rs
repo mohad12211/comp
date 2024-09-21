@@ -34,7 +34,7 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
                 src = emit_operand(src),
                 dst = emit_operand(dst)
             ),
-            Instruction::Ret => "ret".to_string(),
+            Instruction::Return => "ret".to_string(),
         })
         .collect::<Vec<String>>()
         .join("\n    ")
