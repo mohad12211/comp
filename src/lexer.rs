@@ -68,6 +68,10 @@ impl<'de> Lexer<'de> {
             '}' => self.add_token(TokenKind::RightBrace, char.len_utf8()),
             ';' => self.add_token(TokenKind::Semicolon, char.len_utf8()),
             '~' => self.add_token(TokenKind::Tilde, char.len_utf8()),
+            '+' => self.add_token(TokenKind::Plus, char.len_utf8()),
+            '*' => self.add_token(TokenKind::Asterisk, char.len_utf8()),
+            '/' => self.add_token(TokenKind::ForwardSlash, char.len_utf8()),
+            '%' => self.add_token(TokenKind::Percent, char.len_utf8()),
             '-' => {
                 if self.rest.chars().nth(1).is_some_and(|c| c == '-') {
                     self.add_token(TokenKind::DoubleHyphen, char.len_utf8() * 2);

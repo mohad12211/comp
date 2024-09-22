@@ -10,6 +10,10 @@ pub enum TokenKind {
     Tilde,
     Hyphen,
     DoubleHyphen,
+    Plus,
+    Asterisk,
+    ForwardSlash,
+    Percent,
 
     // Literals.
     Identifier,
