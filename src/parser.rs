@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{Expr, Function, Program, Stmt},
+    ast::{BinaryOp, Expr, Function, Program, Stmt, UnaryOp},
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -14,6 +14,9 @@ pub enum ParseError {
         line: usize,
     },
     InvalidExpression {
+        line: usize,
+    },
+    InvalidFactor {
         line: usize,
     },
 }
@@ -31,6 +34,9 @@ impl Display for ParseError {
             ),
             ParseError::InvalidExpression { line } => {
                 write!(f, "Invalid Expression at line: {line}.")
+            }
+            ParseError::InvalidFactor { line } => {
+                write!(f, "Invalid Factor at line: {line}.")
             }
         }
     }
@@ -92,45 +98,81 @@ impl<'de> Parser<'de> {
     }
 
     fn consume(&mut self) -> Token<'de> {
-        // TODO: add proper expect
-        let token = self.tokens.first().unwrap();
+        let token = self
+            .tokens
+            .first()
+            .expect("Should only be called when you know the next token");
         self.tokens = &self.tokens[1..];
         *token
     }
 
-    fn statement(&mut self) -> Result<Stmt<'de>, ParseError> {
+    fn statement(&mut self) -> Result<Stmt, ParseError> {
         self.expect(TokenKind::Return)?;
-        let return_value = self.expression()?;
+        let return_value = self.expression(0)?;
         self.expect(TokenKind::Semicolon)?;
         Ok(Stmt::Return(return_value))
     }
 
-    fn expression(&mut self) -> Result<Expr<'de>, ParseError> {
+    fn factor(&mut self) -> Result<Expr, ParseError> {
         match self.tokens.first().map(|token| token.kind) {
-            Some(TokenKind::Constant) => Ok(Expr::Constant(self.int()?)),
-            Some(TokenKind::Tilde) | Some(TokenKind::Hyphen) => {
-                let operator = self.consume();
-                let right = self.expression()?.into();
-                Ok(Expr::Unary { operator, right })
-            }
+            Some(TokenKind::Constant) => Ok(Expr::Constant(
+                self.expect(TokenKind::Constant)?
+                    .lexeme
+                    .parse()
+                    .expect("Lexer should only parse valid integers"),
+            )),
+            Some(TokenKind::Tilde) => self.unary(UnaryOp::Complement),
+            Some(TokenKind::Hyphen) => self.unary(UnaryOp::Negate),
             Some(TokenKind::LeftParen) => {
-                self.expect(TokenKind::LeftParen)?;
-                let inner_expr = self.expression()?;
+                let _paren_token = self.consume();
+                let inner = self.expression(0)?;
                 self.expect(TokenKind::RightParen)?;
-                Ok(inner_expr)
+                Ok(inner)
             }
-            _ => Err(ParseError::InvalidExpression {
-                line: self.get_last_line(),
+            _ => Err(ParseError::InvalidFactor {
+                line: self
+                    .tokens
+                    .first()
+                    .map_or(self.get_last_line(), |token| token.line),
             }),
         }
     }
 
-    fn int(&mut self) -> Result<i32, ParseError> {
-        Ok(self
-            .expect(TokenKind::Constant)?
-            .lexeme
-            .parse()
-            .expect("Lexer should only parse valid integers"))
+    fn unary(&mut self, operator: UnaryOp) -> Result<Expr, ParseError> {
+        let _operator_token = self.consume();
+        let right = self.factor()?.into();
+        Ok(Expr::Unary { operator, right })
+    }
+
+    fn expression(&mut self, min_prec: usize) -> Result<Expr, ParseError> {
+        let mut left = self.factor()?;
+        while let Some((token, prec)) = self.tokens.first().and_then(|token| {
+            token
+                .kind
+                .precedence()
+                .filter(|&prec| prec >= min_prec)
+                .map(|prec| (token, prec))
+        }) {
+            let operator = match token.kind {
+                TokenKind::Plus => BinaryOp::Add,
+                TokenKind::Hyphen => BinaryOp::Subtract,
+                TokenKind::ForwardSlash => BinaryOp::Divide,
+                TokenKind::Percent => BinaryOp::Remainder,
+                TokenKind::Asterisk => BinaryOp::Multiply,
+                _ => break,
+            };
+            let _operator_token = self.consume();
+            left = {
+                let prec = prec + 1;
+                let right = self.expression(prec)?;
+                Ok(Expr::Binary {
+                    operator,
+                    left: left.into(),
+                    right: right.into(),
+                })
+            }?;
+        }
+        Ok(left)
     }
 
     fn get_last_line(&self) -> usize {

@@ -25,6 +25,19 @@ pub enum TokenKind {
     Return,
 }
 
+impl TokenKind {
+    pub fn precedence(&self) -> Option<usize> {
+        match self {
+            TokenKind::Hyphen => Some(45),
+            TokenKind::Plus => Some(45),
+            TokenKind::Asterisk => Some(50),
+            TokenKind::ForwardSlash => Some(50),
+            TokenKind::Percent => Some(50),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Token<'de> {
     pub kind: TokenKind,

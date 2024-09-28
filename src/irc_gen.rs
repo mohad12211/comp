@@ -36,7 +36,7 @@ impl IrcGenerator {
                 let src = self.gen_expr(right, instructions);
                 let dst_var = self.gen_temp();
                 let dst = irc::Value::Var(dst_var);
-                let irc_operator = self.gen_unary(operator.kind);
+                let irc_operator = self.gen_unary(operator);
                 instructions.push(irc::Instruction::Unary {
                     operator: irc_operator,
                     src,
@@ -44,6 +44,11 @@ impl IrcGenerator {
                 });
                 return dst;
             }
+            ast::Expr::Binary {
+                operator,
+                left,
+                right,
+            } => todo!(),
         }
     }
 
@@ -64,11 +69,10 @@ impl IrcGenerator {
         return old;
     }
 
-    fn gen_unary(&mut self, token_kind: TokenKind) -> irc::UnaryOp {
-        match token_kind {
-            TokenKind::Tilde => irc::UnaryOp::Complement,
-            TokenKind::Hyphen => irc::UnaryOp::Negate,
-            _ => unreachable!(),
+    fn gen_unary(&mut self, operator: &ast::UnaryOp) -> irc::UnaryOp {
+        match operator {
+            ast::UnaryOp::Complement => irc::UnaryOp::Complement,
+            ast::UnaryOp::Negate => irc::UnaryOp::Negate,
         }
     }
 }
