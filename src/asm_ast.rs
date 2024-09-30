@@ -8,13 +8,22 @@ pub enum Program<'a> {
 #[derive(Debug, Clone, Copy)]
 pub enum Register {
     AX,
+    DX,
     R10,
+    R11,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum UnaryOp {
     Neg,
     Not,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mult,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,9 +36,22 @@ pub enum Operand {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
-    Mov { src: Operand, dst: Operand },
+    Mov {
+        src: Operand,
+        dst: Operand,
+    },
     Return,
-    Unary { operator: UnaryOp, operand: Operand },
+    Unary {
+        operator: UnaryOp,
+        operand: Operand,
+    },
+    Binary {
+        operator: BinaryOp,
+        operand1: Operand,
+        operand2: Operand,
+    },
+    Idiv(Operand),
+    Cdq,
     AllocateStack(i32),
 }
 

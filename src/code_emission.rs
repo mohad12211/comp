@@ -47,6 +47,13 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
                 )
             }
             Instruction::AllocateStack(bytes) => format!("subq    ${bytes}, %rsp"),
+            Instruction::Binary {
+                operator,
+                operand1,
+                operand2,
+            } => todo!(),
+            Instruction::Idiv(operand) => todo!(),
+            Instruction::Cdq => todo!(),
         })
         .collect::<Vec<String>>()
         .join("\n    ")
@@ -56,7 +63,9 @@ fn emit_operand(operand: &Operand) -> String {
     match operand {
         Operand::Imm(value) => format!("${value}"),
         Operand::Register(Register::AX) => "%eax".to_string(),
+        Operand::Register(Register::DX) => "%eax".to_string(),
         Operand::Register(Register::R10) => "%r10d".to_string(),
+        Operand::Register(Register::R11) => "%r10d".to_string(),
         Operand::Stack(offset) => format!("{offset}(%rbp)"),
         Operand::Pseudo(_) => unreachable!(),
     }
