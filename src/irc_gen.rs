@@ -1,4 +1,4 @@
-use crate::{ast, irc, token::TokenKind};
+use crate::{ast, irc};
 
 #[derive(Default)]
 pub struct IrcGenerator {
@@ -48,7 +48,20 @@ impl IrcGenerator {
                 operator,
                 left,
                 right,
-            } => todo!(),
+            } => {
+                let v1 = self.gen_expr(left, instructions);
+                let v2 = self.gen_expr(right, instructions);
+                let dst_var = self.gen_temp();
+                let dst = irc::Value::Var(dst_var);
+                let irc_operator = self.gen_binary(operator);
+                instructions.push(irc::Instruction::Binary {
+                    operator: irc_operator,
+                    src1: v1,
+                    src2: v2,
+                    dst: dst_var,
+                });
+                return dst;
+            }
         }
     }
 
@@ -73,6 +86,16 @@ impl IrcGenerator {
         match operator {
             ast::UnaryOp::Complement => irc::UnaryOp::Complement,
             ast::UnaryOp::Negate => irc::UnaryOp::Negate,
+        }
+    }
+
+    fn gen_binary(&mut self, operator: &ast::BinaryOp) -> irc::BinaryOp {
+        match operator {
+            ast::BinaryOp::Add => irc::BinaryOp::Add,
+            ast::BinaryOp::Subtract => irc::BinaryOp::Subtract,
+            ast::BinaryOp::Multiply => irc::BinaryOp::Multiply,
+            ast::BinaryOp::Divide => irc::BinaryOp::Divide,
+            ast::BinaryOp::Remainder => irc::BinaryOp::Remainder,
         }
     }
 }

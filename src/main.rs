@@ -60,6 +60,7 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     }
     let mut parser = parser::Parser::new(&lexer);
     let ast_program = parser.parse()?;
+    println!("{ast_program:#?}");
     if cli.parse {
         return Ok(());
     }

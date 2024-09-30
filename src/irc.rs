@@ -18,11 +18,26 @@ pub enum UnaryOp {
 }
 
 #[derive(Debug)]
+pub enum BinaryOp {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+}
+
+#[derive(Debug)]
 pub enum Instruction {
     Ret(Value),
     Unary {
         operator: UnaryOp,
         src: Value,
+        dst: usize,
+    },
+    Binary {
+        operator: BinaryOp,
+        src1: Value,
+        src2: Value,
         dst: usize,
     },
 }

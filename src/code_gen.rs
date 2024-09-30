@@ -42,6 +42,12 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
                 },
             ]
         }
+        irc::Instruction::Binary {
+            operator,
+            src1,
+            src2,
+            dst,
+        } => todo!(),
     }
 }
 
