@@ -14,6 +14,11 @@ pub enum TokenKind {
     Asterisk,
     ForwardSlash,
     Percent,
+    And,
+    Or,
+    Xor,
+    LeftShift,
+    RightShift,
 
     // Literals.
     Identifier,
