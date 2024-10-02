@@ -123,6 +123,7 @@ impl<'de> Parser<'de> {
             )),
             Some(TokenKind::Tilde) => self.unary(UnaryOp::Complement),
             Some(TokenKind::Hyphen) => self.unary(UnaryOp::Negate),
+            Some(TokenKind::Bang) => self.unary(UnaryOp::Not),
             Some(TokenKind::LeftParen) => {
                 let _paren_token = self.consume();
                 let inner = self.expression(0)?;
@@ -146,9 +147,17 @@ impl<'de> Parser<'de> {
 
     fn binary_op(token: &Token) -> Option<(BinaryOp, usize)> {
         match token.kind {
+            TokenKind::DoubleBar => Some((BinaryOp::Or, 5)),
+            TokenKind::DoubleAmpersand => Some((BinaryOp::And, 10)),
             TokenKind::Bar => Some((BinaryOp::BitOr, 15)),
             TokenKind::Caret => Some((BinaryOp::Xor, 20)),
             TokenKind::Ampersand => Some((BinaryOp::BitAnd, 25)),
+            TokenKind::DoubleEqual => Some((BinaryOp::Equal, 30)),
+            TokenKind::BangEqual => Some((BinaryOp::NotEqual, 30)),
+            TokenKind::Greater => Some((BinaryOp::GreaterThan, 35)),
+            TokenKind::GreaterEqual => Some((BinaryOp::GreaterOrEqual, 35)),
+            TokenKind::Less => Some((BinaryOp::LessThan, 35)),
+            TokenKind::LessEqual => Some((BinaryOp::LessOrEqual, 35)),
             TokenKind::LeftShift => Some((BinaryOp::LeftShift, 40)),
             TokenKind::RightShift => Some((BinaryOp::RightShift, 40)),
             TokenKind::Hyphen => Some((BinaryOp::Subtract, 45)),

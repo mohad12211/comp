@@ -23,6 +23,7 @@ pub enum Expr {
 pub enum UnaryOp {
     Complement,
     Negate,
+    Not,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -37,6 +38,14 @@ pub enum BinaryOp {
     BitAnd,
     Xor,
     BitOr,
+    And,
+    Or,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessOrEqual,
+    GreaterThan,
+    GreaterOrEqual,
 }
 
 #[derive(Debug)]

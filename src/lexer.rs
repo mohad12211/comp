@@ -40,22 +40,22 @@ impl<'de> Lexer<'de> {
             '*' => self.add_token(TokenKind::Asterisk),
             '/' => self.add_token(TokenKind::ForwardSlash),
             '%' => self.add_token(TokenKind::Percent),
-            '&' => self.add_token(TokenKind::Ampersand),
-            '|' => self.add_token(TokenKind::Bar),
             '^' => self.add_token(TokenKind::Caret),
-            '>' if self.try_consume('>') => {
-                self.add_token(TokenKind::RightShift);
-            }
-            '<' if self.try_consume('<') => {
-                self.add_token(TokenKind::LeftShift);
-            }
-            '-' => {
-                if self.try_consume('-') {
-                    self.add_token(TokenKind::DoubleHyphen);
-                } else {
-                    self.add_token(TokenKind::Hyphen);
-                }
-            }
+            '&' if self.try_consume('&') => self.add_token(TokenKind::DoubleAmpersand),
+            '&' => self.add_token(TokenKind::Ampersand),
+            '|' if self.try_consume('|') => self.add_token(TokenKind::DoubleBar),
+            '|' => self.add_token(TokenKind::Bar),
+            '>' if self.try_consume('>') => self.add_token(TokenKind::RightShift),
+            '>' if self.try_consume('=') => self.add_token(TokenKind::GreaterEqual),
+            '>' => self.add_token(TokenKind::Greater),
+            '<' if self.try_consume('<') => self.add_token(TokenKind::LeftShift),
+            '<' if self.try_consume('=') => self.add_token(TokenKind::LessEqual),
+            '<' => self.add_token(TokenKind::Less),
+            '-' if self.try_consume('-') => self.add_token(TokenKind::DoubleHyphen),
+            '-' => self.add_token(TokenKind::Hyphen),
+            '!' if self.try_consume('=') => self.add_token(TokenKind::BangEqual),
+            '!' => self.add_token(TokenKind::Bang),
+            '=' if self.try_consume('=') => self.add_token(TokenKind::DoubleEqual),
             ' ' | '\t' => {}
             '\n' => self.line += 1,
             c if c.is_ascii_digit() => self.number()?,

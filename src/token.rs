@@ -19,6 +19,15 @@ pub enum TokenKind {
     Caret,
     LeftShift,
     RightShift,
+    Bang,
+    DoubleAmpersand,
+    DoubleBar,
+    DoubleEqual,
+    BangEqual,
+    Less,
+    Greater,
+    LessEqual,
+    GreaterEqual,
 
     // Literals.
     Identifier,

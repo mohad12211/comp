@@ -86,6 +86,7 @@ impl IrcGenerator {
         match operator {
             ast::UnaryOp::Complement => irc::UnaryOp::Complement,
             ast::UnaryOp::Negate => irc::UnaryOp::Negate,
+            ast::UnaryOp::Not => todo!(),
         }
     }
 
@@ -101,6 +102,14 @@ impl IrcGenerator {
             ast::BinaryOp::BitAnd => irc::BinaryOp::And,
             ast::BinaryOp::Xor => irc::BinaryOp::Xor,
             ast::BinaryOp::BitOr => irc::BinaryOp::Or,
+            ast::BinaryOp::And => todo!(),
+            ast::BinaryOp::Or => todo!(),
+            ast::BinaryOp::Equal => todo!(),
+            ast::BinaryOp::NotEqual => todo!(),
+            ast::BinaryOp::LessThan => todo!(),
+            ast::BinaryOp::LessOrEqual => todo!(),
+            ast::BinaryOp::GreaterThan => todo!(),
+            ast::BinaryOp::GreaterOrEqual => todo!(),
         }
     }
 }
