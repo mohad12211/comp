@@ -135,7 +135,7 @@ impl IrcGenerator {
         }
     }
 
-    fn gen_stmt<'a>(&mut self, stmt: ast::Stmt) -> Vec<irc::Instruction> {
+    fn gen_stmt(&mut self, stmt: ast::Stmt) -> Vec<irc::Instruction> {
         match stmt {
             ast::Stmt::Return(expr) => {
                 let mut instructions = Vec::new();
@@ -175,17 +175,16 @@ impl IrcGenerator {
             ast::BinaryOp::Remainder => irc::BinaryOp::Remainder,
             ast::BinaryOp::LeftShift => irc::BinaryOp::LeftShift,
             ast::BinaryOp::RightShift => irc::BinaryOp::RightShift,
-            ast::BinaryOp::BitAnd => irc::BinaryOp::And,
+            ast::BinaryOp::BitAnd => irc::BinaryOp::BitAnd,
             ast::BinaryOp::Xor => irc::BinaryOp::Xor,
-            ast::BinaryOp::BitOr => irc::BinaryOp::Or,
-            ast::BinaryOp::And => irc::BinaryOp::And,
-            ast::BinaryOp::Or => irc::BinaryOp::Or,
+            ast::BinaryOp::BitOr => irc::BinaryOp::BitOr,
             ast::BinaryOp::Equal => irc::BinaryOp::Equal,
             ast::BinaryOp::NotEqual => irc::BinaryOp::NotEqual,
             ast::BinaryOp::LessThan => irc::BinaryOp::LessThan,
             ast::BinaryOp::LessOrEqual => irc::BinaryOp::LessOrEqual,
             ast::BinaryOp::GreaterThan => irc::BinaryOp::GreaterThan,
             ast::BinaryOp::GreaterOrEqual => irc::BinaryOp::GreaterOrEqual,
+            ast::BinaryOp::And | ast::BinaryOp::Or => unreachable!(),
         }
     }
 }

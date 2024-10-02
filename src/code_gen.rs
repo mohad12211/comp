@@ -77,9 +77,9 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
                 irc::BinaryOp::RightShift => {
                     gen_binary_ins(asm_ast::BinaryOp::Shr, src1, src2, dst)
                 }
-                irc::BinaryOp::And => gen_binary_ins(asm_ast::BinaryOp::And, src1, src2, dst),
+                irc::BinaryOp::BitAnd => gen_binary_ins(asm_ast::BinaryOp::And, src1, src2, dst),
                 irc::BinaryOp::Xor => gen_binary_ins(asm_ast::BinaryOp::Xor, src1, src2, dst),
-                irc::BinaryOp::Or => gen_binary_ins(asm_ast::BinaryOp::Or, src1, src2, dst),
+                irc::BinaryOp::BitOr => gen_binary_ins(asm_ast::BinaryOp::Or, src1, src2, dst),
                 irc::BinaryOp::Equal => gen_binary_rel(asm_ast::CondCode::E, src1, src2, dst),
                 irc::BinaryOp::NotEqual => gen_binary_rel(asm_ast::CondCode::NE, src1, src2, dst),
                 irc::BinaryOp::LessThan => gen_binary_rel(asm_ast::CondCode::L, src1, src2, dst),
@@ -213,27 +213,22 @@ pub fn replace_pseudo(program: &mut asm_ast::Program) {
                     replace_operand(src);
                     replace_operand(dst);
                 }
-                asm_ast::Instruction::Unary {
-                    operator: _,
-                    operand,
-                } => replace_operand(operand),
                 asm_ast::Instruction::Binary {
                     operator: _,
                     operand1,
                     operand2,
-                } => {
+                }
+                | asm_ast::Instruction::Cmp { operand1, operand2 } => {
                     replace_operand(operand1);
                     replace_operand(operand2);
                 }
-                asm_ast::Instruction::Idiv(operand) => {
-                    replace_operand(operand);
-                }
-                asm_ast::Instruction::Cmp { operand1, operand2 } => {
-                    replace_operand(operand1);
-                    replace_operand(operand2);
-                }
-                asm_ast::Instruction::SetCC {
+                asm_ast::Instruction::Idiv(operand)
+                | asm_ast::Instruction::SetCC {
                     cond_code: _,
+                    operand,
+                }
+                | asm_ast::Instruction::Unary {
+                    operator: _,
                     operand,
                 } => {
                     replace_operand(operand);
