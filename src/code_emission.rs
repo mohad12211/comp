@@ -20,7 +20,7 @@ fn emit_function(function: Function) -> String {
     movq    %rsp, %rbp
     {instructions}
 ",
-        name = function.name.lexeme,
+        name = function.name,
         instructions = emit_instructions(function.instructons)
     )
 }

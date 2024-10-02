@@ -73,7 +73,7 @@ impl<'de> Parser<'de> {
 
     fn function(&mut self) -> Result<Function<'de>, ParseError> {
         self.expect(TokenKind::Int)?;
-        let name = self.expect(TokenKind::Identifier)?;
+        let name = self.expect(TokenKind::Identifier)?.lexeme;
         self.expect(TokenKind::LeftParen)?;
         self.expect(TokenKind::Void)?;
         self.expect(TokenKind::RightParen)?;
