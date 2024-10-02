@@ -38,7 +38,7 @@ pub enum Operand {
     Stack(usize),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     Mov {
         src: Operand,
@@ -54,9 +54,33 @@ pub enum Instruction {
         operand1: Operand,
         operand2: Operand,
     },
+    Cmp {
+        operand1: Operand,
+        operand2: Operand,
+    },
+    Jmp(String),
+    JumpCC {
+        cond_code: CondCode,
+        target: String,
+    },
+    SetCC {
+        cond_code: CondCode,
+        operand: Operand,
+    },
+    Label(String),
     Idiv(Operand),
     Cdq,
     AllocateStack(usize),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum CondCode {
+    E,
+    NE,
+    G,
+    GE,
+    L,
+    LE,
 }
 
 #[derive(Debug)]

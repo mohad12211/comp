@@ -61,6 +61,11 @@ fn emit_instructions(instructions: Vec<Instruction>) -> String {
                 format!("idivl    {operand}", operand = emit_operand(operand))
             }
             Instruction::Cdq => "cdq".to_string(),
+            Instruction::Cmp { operand1, operand2 } => todo!(),
+            Instruction::Jmp(_) => todo!(),
+            Instruction::JumpCC { cond_code, target } => todo!(),
+            Instruction::SetCC { cond_code, operand } => todo!(),
+            Instruction::Label(_) => todo!(),
         })
         .collect::<Vec<String>>()
         .join("\n    ")
