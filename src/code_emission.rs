@@ -124,11 +124,11 @@ fn emit_binary(operator: BinaryOp) -> String {
         BinaryOp::Add => "addl".to_string(),
         BinaryOp::Sub => "subl".to_string(),
         BinaryOp::Mult => "imull".to_string(),
-        BinaryOp::And => "and".to_string(),
-        BinaryOp::Or => "or".to_string(),
-        BinaryOp::Xor => "xor".to_string(),
-        BinaryOp::Shl => "sal".to_string(),
-        BinaryOp::Shr => "sar".to_string(),
+        BinaryOp::And => "andl".to_string(),
+        BinaryOp::Or => "orl".to_string(),
+        BinaryOp::Xor => "xorl".to_string(),
+        BinaryOp::Shl => "sall".to_string(),
+        BinaryOp::Shr => "sarl".to_string(),
     }
 }
 
