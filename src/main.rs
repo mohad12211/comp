@@ -81,7 +81,7 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
 
 fn assemble(file: &str) -> Result<()> {
     let output = Command::new("gcc")
-        .args([&format!("{file}.s"), "-o", file])
+        .args(["-Wa,--fatal-warnings", &format!("{file}.s"), "-o", file])
         .output()
         .map_err(|e| Error::IO(format!("Couldn't run gcc to assemble:\n - {e}")))?;
 

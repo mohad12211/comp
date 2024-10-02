@@ -160,7 +160,7 @@ fn gen_unary(operator: &irc::UnaryOp) -> asm_ast::UnaryOp {
     match operator {
         irc::UnaryOp::Complement => asm_ast::UnaryOp::Not,
         irc::UnaryOp::Negate => asm_ast::UnaryOp::Neg,
-        irc::UnaryOp::Not => asm_ast::UnaryOp::Not,
+        irc::UnaryOp::Not => unreachable!(),
     }
 }
 
@@ -351,9 +351,9 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
                                     src: asm_ast::Operand::Stack(*operand1),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::R10),
                                 },
-                                asm_ast::Instruction::Mov {
-                                    src: asm_ast::Operand::Register(asm_ast::Register::R10),
-                                    dst: asm_ast::Operand::Stack(*operand2),
+                                asm_ast::Instruction::Cmp {
+                                    operand1: asm_ast::Operand::Register(asm_ast::Register::R10),
+                                    operand2: asm_ast::Operand::Stack(*operand2),
                                 },
                             ]
                         }

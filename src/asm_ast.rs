@@ -83,6 +83,11 @@ pub enum CondCode {
     LE,
 }
 
+pub enum RegisterSize {
+    One,
+    Four,
+}
+
 #[derive(Debug)]
 pub struct Function<'a> {
     pub name: &'a str,

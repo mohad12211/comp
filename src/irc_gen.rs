@@ -87,28 +87,28 @@ impl IrcGenerator {
                 let result_var = self.gen_temp();
                 let result = irc::Value::Var(result_var);
                 let v1 = self.gen_expr(left, instructions);
-                let false_label = self.gen_label("and_false");
-                let end_label = self.gen_label("and_end");
+                let true_label = self.gen_label("or_true");
+                let end_label = self.gen_label("or_end");
 
                 instructions.push(irc::Instruction::JumpIfNotZero {
                     condition: v1,
-                    target: false_label.clone(),
+                    target: true_label.clone(),
                 });
                 let v2 = self.gen_expr(right, instructions);
                 instructions.push(irc::Instruction::JumpIfNotZero {
                     condition: v2,
-                    target: false_label.clone(),
+                    target: true_label.clone(),
                 });
                 instructions.push(irc::Instruction::Copy {
-                    src: irc::Value::Constant(1),
+                    src: irc::Value::Constant(0),
                     dst: result_var,
                 });
                 instructions.push(irc::Instruction::Jump {
                     target: end_label.clone(),
                 });
-                instructions.push(irc::Instruction::Label(false_label));
+                instructions.push(irc::Instruction::Label(true_label));
                 instructions.push(irc::Instruction::Copy {
-                    src: irc::Value::Constant(0),
+                    src: irc::Value::Constant(1),
                     dst: result_var,
                 });
                 instructions.push(irc::Instruction::Label(end_label));
