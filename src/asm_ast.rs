@@ -37,7 +37,7 @@ pub enum Operand {
     Imm(i32),
     Register(Register),
     Pseudo(usize),
-    Stack(i32),
+    Stack(usize),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -58,7 +58,7 @@ pub enum Instruction {
     },
     Idiv(Operand),
     Cdq,
-    AllocateStack(i32),
+    AllocateStack(usize),
 }
 
 #[derive(Debug)]

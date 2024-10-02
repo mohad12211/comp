@@ -5,7 +5,7 @@ pub enum Program<'a> {
     Function(Function<'a>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Value {
     Constant(i32),
     Var(usize),
@@ -17,7 +17,7 @@ pub enum UnaryOp {
     Negate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum BinaryOp {
     Add,
     Subtract,

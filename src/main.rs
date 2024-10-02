@@ -59,15 +59,15 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
         return Ok(());
     }
     let mut parser = parser::Parser::new(&lexer);
-    let ast_program = parser.parse()?;
+    let ast = parser.parse()?;
     if cli.parse {
         return Ok(());
     }
-    let (irc_program, stack_allocation) = IrcGenerator::gen_program(ast_program);
+    let (irc, stack_allocation) = IrcGenerator::gen_program(ast);
     if cli.irc {
         return Ok(());
     }
-    let mut asm_program = code_gen::gen_program(irc_program);
+    let mut asm_program = code_gen::gen_program(irc);
     code_gen::replace_pseudo(&mut asm_program);
     code_gen::fix_instructions(&mut asm_program, stack_allocation);
     if cli.code_gen {

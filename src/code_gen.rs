@@ -14,8 +14,7 @@ fn gen_function(function: irc::Function) -> asm_ast::Function {
         instructons: function
             .instructons
             .into_iter()
-            .map(gen_instruction)
-            .flatten()
+            .flat_map(gen_instruction)
             .collect(),
     }
 }
@@ -37,7 +36,7 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
                     dst,
                 },
                 asm_ast::Instruction::Unary {
-                    operator: gen_unary(operator),
+                    operator: gen_unary(&operator),
                     operand: dst,
                 },
             ]
@@ -98,7 +97,7 @@ fn gen_operand(value: irc::Value) -> asm_ast::Operand {
     }
 }
 
-fn gen_unary(operator: irc::UnaryOp) -> asm_ast::UnaryOp {
+fn gen_unary(operator: &irc::UnaryOp) -> asm_ast::UnaryOp {
     match operator {
         irc::UnaryOp::Complement => asm_ast::UnaryOp::Not,
         irc::UnaryOp::Negate => asm_ast::UnaryOp::Neg,
@@ -117,7 +116,7 @@ fn gen_binary_ins(
             dst,
         },
         asm_ast::Instruction::Binary {
-            operator: operator,
+            operator,
             operand1: gen_operand(src2),
             operand2: dst,
         },
@@ -155,116 +154,105 @@ pub fn replace_pseudo(program: &mut asm_ast::Program) {
     }
 }
 
-pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: i32) {
+pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize) {
     match program {
         asm_ast::Program::Function(function) => {
             function.instructons =
                 iter::once(asm_ast::Instruction::AllocateStack(stack_allocation))
-                    .chain(
-                        function.instructons.iter().flat_map(|ins| match ins {
+                    .chain(function.instructons.iter().flat_map(|ins| match ins {
+                        asm_ast::Instruction::Mov {
+                            src: asm_ast::Operand::Stack(src),
+                            dst: asm_ast::Operand::Stack(dst),
+                        } => vec![
                             asm_ast::Instruction::Mov {
-                                src: asm_ast::Operand::Stack(src),
-                                dst: asm_ast::Operand::Stack(dst),
-                            } => vec![
+                                src: asm_ast::Operand::Stack(*src),
+                                dst: asm_ast::Operand::Register(asm_ast::Register::R10),
+                            },
+                            asm_ast::Instruction::Mov {
+                                src: asm_ast::Operand::Register(asm_ast::Register::R10),
+                                dst: asm_ast::Operand::Stack(*dst),
+                            },
+                        ],
+                        asm_ast::Instruction::Idiv(src @ asm_ast::Operand::Imm(_)) => {
+                            vec![
+                                asm_ast::Instruction::Mov {
+                                    src: *src,
+                                    dst: asm_ast::Operand::Register(asm_ast::Register::R10),
+                                },
+                                asm_ast::Instruction::Idiv(asm_ast::Operand::Register(
+                                    asm_ast::Register::R10,
+                                )),
+                            ]
+                        }
+                        asm_ast::Instruction::Binary {
+                            operator:
+                                operator @ (asm_ast::BinaryOp::Add
+                                | asm_ast::BinaryOp::Sub
+                                | asm_ast::BinaryOp::And
+                                | asm_ast::BinaryOp::Xor
+                                | asm_ast::BinaryOp::Or),
+                            operand1: asm_ast::Operand::Stack(src),
+                            operand2: asm_ast::Operand::Stack(dst),
+                        } => {
+                            vec![
                                 asm_ast::Instruction::Mov {
                                     src: asm_ast::Operand::Stack(*src),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::R10),
                                 },
-                                asm_ast::Instruction::Mov {
-                                    src: asm_ast::Operand::Register(asm_ast::Register::R10),
-                                    dst: asm_ast::Operand::Stack(*dst),
+                                asm_ast::Instruction::Binary {
+                                    operator: *operator,
+                                    operand1: asm_ast::Operand::Register(asm_ast::Register::R10),
+                                    operand2: asm_ast::Operand::Stack(*dst),
                                 },
-                            ],
-                            asm_ast::Instruction::Idiv(src @ asm_ast::Operand::Imm(_)) => {
-                                vec![
-                                    asm_ast::Instruction::Mov {
-                                        src: *src,
-                                        dst: asm_ast::Operand::Register(asm_ast::Register::R10),
-                                    },
-                                    asm_ast::Instruction::Idiv(asm_ast::Operand::Register(
-                                        asm_ast::Register::R10,
-                                    )),
-                                ]
-                            }
-                            asm_ast::Instruction::Binary {
-                                operator:
-                                    operator @ asm_ast::BinaryOp::Add
-                                    | operator @ asm_ast::BinaryOp::Sub
-                                    | operator @ asm_ast::BinaryOp::And
-                                    | operator @ asm_ast::BinaryOp::Xor
-                                    | operator @ asm_ast::BinaryOp::Or,
-                                operand1: asm_ast::Operand::Stack(src),
-                                operand2: asm_ast::Operand::Stack(dst),
-                            } => {
-                                vec![
-                                    asm_ast::Instruction::Mov {
-                                        src: asm_ast::Operand::Stack(*src),
-                                        dst: asm_ast::Operand::Register(asm_ast::Register::R10),
-                                    },
-                                    asm_ast::Instruction::Binary {
-                                        operator: *operator,
-                                        operand1: asm_ast::Operand::Register(
-                                            asm_ast::Register::R10,
-                                        ),
-                                        operand2: asm_ast::Operand::Stack(*dst),
-                                    },
-                                ]
-                            }
-                            asm_ast::Instruction::Binary {
-                                operator: operator @ asm_ast::BinaryOp::Mult,
-                                operand1: operand1 @ _,
-                                operand2: src @ asm_ast::Operand::Stack(_),
-                            } => {
-                                vec![
-                                    asm_ast::Instruction::Mov {
-                                        src: *src,
-                                        dst: asm_ast::Operand::Register(asm_ast::Register::R11),
-                                    },
-                                    asm_ast::Instruction::Binary {
-                                        operator: *operator,
-                                        operand1: *operand1,
-                                        operand2: asm_ast::Operand::Register(
-                                            asm_ast::Register::R11,
-                                        ),
-                                    },
-                                    asm_ast::Instruction::Mov {
-                                        src: asm_ast::Operand::Register(asm_ast::Register::R11),
-                                        dst: *src,
-                                    },
-                                ]
-                            }
-                            asm_ast::Instruction::Binary {
-                                operator:
-                                    operator @ asm_ast::BinaryOp::Shr
-                                    | operator @ asm_ast::BinaryOp::Shl,
-                                operand1: src @ asm_ast::Operand::Stack(_),
-                                operand2: operand2 @ _,
-                            } => {
-                                vec![
-                                    asm_ast::Instruction::Mov {
-                                        src: *src,
-                                        dst: asm_ast::Operand::Register(asm_ast::Register::CX),
-                                    },
-                                    asm_ast::Instruction::Binary {
-                                        operator: *operator,
-                                        operand1: asm_ast::Operand::Register(asm_ast::Register::CX),
-                                        operand2: *operand2,
-                                    },
-                                ]
-                            }
-                            _ => vec![*ins],
-                        }),
-                    )
+                            ]
+                        }
+                        asm_ast::Instruction::Binary {
+                            operator: operator @ asm_ast::BinaryOp::Mult,
+                            operand1,
+                            operand2: src @ asm_ast::Operand::Stack(_),
+                        } => {
+                            vec![
+                                asm_ast::Instruction::Mov {
+                                    src: *src,
+                                    dst: asm_ast::Operand::Register(asm_ast::Register::R11),
+                                },
+                                asm_ast::Instruction::Binary {
+                                    operator: *operator,
+                                    operand1: *operand1,
+                                    operand2: asm_ast::Operand::Register(asm_ast::Register::R11),
+                                },
+                                asm_ast::Instruction::Mov {
+                                    src: asm_ast::Operand::Register(asm_ast::Register::R11),
+                                    dst: *src,
+                                },
+                            ]
+                        }
+                        asm_ast::Instruction::Binary {
+                            operator: operator @ (asm_ast::BinaryOp::Shr | asm_ast::BinaryOp::Shl),
+                            operand1: src @ asm_ast::Operand::Stack(_),
+                            operand2,
+                        } => {
+                            vec![
+                                asm_ast::Instruction::Mov {
+                                    src: *src,
+                                    dst: asm_ast::Operand::Register(asm_ast::Register::CX),
+                                },
+                                asm_ast::Instruction::Binary {
+                                    operator: *operator,
+                                    operand1: asm_ast::Operand::Register(asm_ast::Register::CX),
+                                    operand2: *operand2,
+                                },
+                            ]
+                        }
+                        _ => vec![*ins],
+                    }))
                     .collect();
         }
     }
 }
 
 fn replace_operand(operand: &mut asm_ast::Operand) {
-    match operand {
-        asm_ast::Operand::Pseudo(counter) => {
-            *operand = asm_ast::Operand::Stack((*counter) as i32 * -4)
-        }
-        _ => {}
+    if let asm_ast::Operand::Pseudo(counter) = operand {
+        *operand = asm_ast::Operand::Stack(*counter * 4);
     }
 }

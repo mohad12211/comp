@@ -6,7 +6,7 @@ pub struct IrcGenerator {
 }
 
 impl IrcGenerator {
-    pub fn gen_program<'a>(program: ast::Program<'a>) -> (irc::Program<'a>, i32) {
+    pub fn gen_program(program: ast::Program<'_>) -> (irc::Program<'_>, usize) {
         let mut irc_generator = IrcGenerator { counter: 1 };
         (
             match program {
@@ -14,7 +14,7 @@ impl IrcGenerator {
                     irc::Program::Function(irc_generator.gen_function(function))
                 }
             },
-            (irc_generator.counter - 1) as i32 * 4,
+            (irc_generator.counter - 1) * 4,
         )
     }
 
@@ -36,13 +36,13 @@ impl IrcGenerator {
                 let src = self.gen_expr(right, instructions);
                 let dst_var = self.gen_temp();
                 let dst = irc::Value::Var(dst_var);
-                let irc_operator = self.gen_unary(operator);
+                let irc_operator = Self::gen_unary(*operator);
                 instructions.push(irc::Instruction::Unary {
                     operator: irc_operator,
                     src,
                     dst: dst_var,
                 });
-                return dst;
+                dst
             }
             ast::Expr::Binary {
                 operator,
@@ -53,14 +53,14 @@ impl IrcGenerator {
                 let v2 = self.gen_expr(right, instructions);
                 let dst_var = self.gen_temp();
                 let dst = irc::Value::Var(dst_var);
-                let irc_operator = self.gen_binary(operator);
+                let irc_operator = Self::gen_binary(*operator);
                 instructions.push(irc::Instruction::Binary {
                     operator: irc_operator,
                     src1: v1,
                     src2: v2,
                     dst: dst_var,
                 });
-                return dst;
+                dst
             }
         }
     }
@@ -71,7 +71,7 @@ impl IrcGenerator {
                 let mut instructions = Vec::new();
                 let value = self.gen_expr(&expr, &mut instructions);
                 instructions.push(irc::Instruction::Ret(value));
-                return instructions;
+                instructions
             }
         }
     }
@@ -79,17 +79,17 @@ impl IrcGenerator {
     fn gen_temp(&mut self) -> usize {
         let old = self.counter;
         self.counter += 1;
-        return old;
+        old
     }
 
-    fn gen_unary(&mut self, operator: &ast::UnaryOp) -> irc::UnaryOp {
+    fn gen_unary(operator: ast::UnaryOp) -> irc::UnaryOp {
         match operator {
             ast::UnaryOp::Complement => irc::UnaryOp::Complement,
             ast::UnaryOp::Negate => irc::UnaryOp::Negate,
         }
     }
 
-    fn gen_binary(&mut self, operator: &ast::BinaryOp) -> irc::BinaryOp {
+    fn gen_binary(operator: ast::BinaryOp) -> irc::BinaryOp {
         match operator {
             ast::BinaryOp::Add => irc::BinaryOp::Add,
             ast::BinaryOp::Subtract => irc::BinaryOp::Subtract,

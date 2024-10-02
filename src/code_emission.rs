@@ -21,14 +21,14 @@ fn emit_function(function: Function) -> String {
     {instructions}
 ",
         name = function.name.lexeme,
-        instructions = emit_instructions(&function.instructons)
+        instructions = emit_instructions(function.instructons)
     )
 }
 
-fn emit_instructions(instructions: &[Instruction]) -> String {
+fn emit_instructions(instructions: Vec<Instruction>) -> String {
     // PERF: doesn't seem efficient
     instructions
-        .iter()
+        .into_iter()
         .map(|ins| match ins {
             Instruction::Mov { src, dst } => format!(
                 "movl    {src}, {dst}",
@@ -46,7 +46,7 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
                     operator = emit_unary(operator)
                 )
             }
-            Instruction::AllocateStack(bytes) => format!("subq    ${bytes}, %rsp"),
+            Instruction::AllocateStack(bytes) => format!("subq    $-{bytes}, %rsp"),
             Instruction::Binary {
                 operator,
                 operand1,
@@ -66,7 +66,7 @@ fn emit_instructions(instructions: &[Instruction]) -> String {
         .join("\n    ")
 }
 
-fn emit_operand(operand: &Operand) -> String {
+fn emit_operand(operand: Operand) -> String {
     match operand {
         Operand::Imm(value) => format!("${value}"),
         Operand::Register(Register::AX) => "%eax".to_string(),
@@ -74,19 +74,19 @@ fn emit_operand(operand: &Operand) -> String {
         Operand::Register(Register::CX) => "%ecx".to_string(),
         Operand::Register(Register::R10) => "%r10d".to_string(),
         Operand::Register(Register::R11) => "%r11d".to_string(),
-        Operand::Stack(offset) => format!("{offset}(%rbp)"),
+        Operand::Stack(offset) => format!("-{offset}(%rbp)"),
         Operand::Pseudo(_) => unreachable!(),
     }
 }
 
-fn emit_unary(operator: &UnaryOp) -> String {
+fn emit_unary(operator: UnaryOp) -> String {
     match operator {
         UnaryOp::Neg => "negl".to_string(),
         UnaryOp::Not => "notl".to_string(),
     }
 }
 
-fn emit_binary(operator: &BinaryOp) -> String {
+fn emit_binary(operator: BinaryOp) -> String {
     match operator {
         BinaryOp::Add => "addl".to_string(),
         BinaryOp::Sub => "subl".to_string(),

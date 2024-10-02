@@ -80,7 +80,7 @@ impl<'de> Lexer<'de> {
     }
 
     fn try_consume(&mut self, expected: char) -> bool {
-        if self.rest[self.len..].chars().next() == Some(expected) {
+        if self.rest[self.len..].starts_with(expected) {
             self.consume();
             true
         } else {
