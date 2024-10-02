@@ -14,9 +14,9 @@ pub enum TokenKind {
     Asterisk,
     ForwardSlash,
     Percent,
-    And,
-    Or,
-    Xor,
+    Ampersand,
+    Bar,
+    Caret,
     LeftShift,
     RightShift,
 
@@ -28,19 +28,6 @@ pub enum TokenKind {
     Int,
     Void,
     Return,
-}
-
-impl TokenKind {
-    pub fn precedence(&self) -> Option<usize> {
-        match self {
-            TokenKind::Hyphen => Some(45),
-            TokenKind::Plus => Some(45),
-            TokenKind::Asterisk => Some(50),
-            TokenKind::ForwardSlash => Some(50),
-            TokenKind::Percent => Some(50),
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug, Copy, Clone)]

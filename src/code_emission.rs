@@ -71,6 +71,7 @@ fn emit_operand(operand: &Operand) -> String {
         Operand::Imm(value) => format!("${value}"),
         Operand::Register(Register::AX) => "%eax".to_string(),
         Operand::Register(Register::DX) => "%edx".to_string(),
+        Operand::Register(Register::CX) => "%ecx".to_string(),
         Operand::Register(Register::R10) => "%r10d".to_string(),
         Operand::Register(Register::R11) => "%r11d".to_string(),
         Operand::Stack(offset) => format!("{offset}(%rbp)"),
@@ -90,5 +91,10 @@ fn emit_binary(operator: &BinaryOp) -> String {
         BinaryOp::Add => "addl".to_string(),
         BinaryOp::Sub => "subl".to_string(),
         BinaryOp::Mult => "imull".to_string(),
+        BinaryOp::And => "and".to_string(),
+        BinaryOp::Or => "or".to_string(),
+        BinaryOp::Xor => "xor".to_string(),
+        BinaryOp::Shl => "sal".to_string(),
+        BinaryOp::Shr => "sar".to_string(),
     }
 }

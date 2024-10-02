@@ -9,6 +9,7 @@ pub enum Program<'a> {
 pub enum Register {
     AX,
     DX,
+    CX,
     R10,
     R11,
 }
@@ -24,6 +25,11 @@ pub enum BinaryOp {
     Add,
     Sub,
     Mult,
+    And,
+    Or,
+    Xor,
+    Shl,
+    Shr,
 }
 
 #[derive(Debug, Clone, Copy)]

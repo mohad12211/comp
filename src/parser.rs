@@ -144,33 +144,37 @@ impl<'de> Parser<'de> {
         Ok(Expr::Unary { operator, right })
     }
 
+    fn binary_op(token: &Token) -> Option<(BinaryOp, usize)> {
+        match token.kind {
+            TokenKind::Bar => Some((BinaryOp::BitOr, 15)),
+            TokenKind::Caret => Some((BinaryOp::Xor, 20)),
+            TokenKind::Ampersand => Some((BinaryOp::BitAnd, 25)),
+            TokenKind::LeftShift => Some((BinaryOp::LeftShift, 40)),
+            TokenKind::RightShift => Some((BinaryOp::RightShift, 40)),
+            TokenKind::Hyphen => Some((BinaryOp::Subtract, 45)),
+            TokenKind::Plus => Some((BinaryOp::Add, 45)),
+            TokenKind::Asterisk => Some((BinaryOp::Multiply, 50)),
+            TokenKind::ForwardSlash => Some((BinaryOp::Divide, 50)),
+            TokenKind::Percent => Some((BinaryOp::Remainder, 50)),
+            _ => None,
+        }
+    }
+
     fn expression(&mut self, min_prec: usize) -> Result<Expr, ParseError> {
         let mut left = self.factor()?;
-        while let Some((token, prec)) = self.tokens.first().and_then(|token| {
-            token
-                .kind
-                .precedence()
-                .filter(|&prec| prec >= min_prec)
-                .map(|prec| (token, prec))
-        }) {
-            let operator = match token.kind {
-                TokenKind::Plus => BinaryOp::Add,
-                TokenKind::Hyphen => BinaryOp::Subtract,
-                TokenKind::ForwardSlash => BinaryOp::Divide,
-                TokenKind::Percent => BinaryOp::Remainder,
-                TokenKind::Asterisk => BinaryOp::Multiply,
-                _ => break,
-            };
+        while let Some((operator, prec)) = self
+            .tokens
+            .first()
+            .and_then(|token| Self::binary_op(token))
+            .filter(|&(_, prec)| prec >= min_prec)
+        {
             let _operator_token = self.consume();
-            left = {
-                let prec = prec + 1;
-                let right = self.expression(prec)?;
-                Ok(Expr::Binary {
-                    operator,
-                    left: left.into(),
-                    right: right.into(),
-                })
-            }?;
+            let right = self.expression(prec + 1)?;
+            left = Expr::Binary {
+                operator,
+                left: left.into(),
+                right: right.into(),
+            };
         }
         Ok(left)
     }

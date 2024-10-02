@@ -96,6 +96,11 @@ impl IrcGenerator {
             ast::BinaryOp::Multiply => irc::BinaryOp::Multiply,
             ast::BinaryOp::Divide => irc::BinaryOp::Divide,
             ast::BinaryOp::Remainder => irc::BinaryOp::Remainder,
+            ast::BinaryOp::LeftShift => irc::BinaryOp::LeftShift,
+            ast::BinaryOp::RightShift => irc::BinaryOp::RightShift,
+            ast::BinaryOp::BitAnd => irc::BinaryOp::And,
+            ast::BinaryOp::Xor => irc::BinaryOp::Xor,
+            ast::BinaryOp::BitOr => irc::BinaryOp::Or,
         }
     }
 }

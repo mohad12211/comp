@@ -24,6 +24,11 @@ pub enum BinaryOp {
     Multiply,
     Divide,
     Remainder,
+    LeftShift,
+    RightShift,
+    And,
+    Xor,
+    Or,
 }
 
 #[derive(Debug)]

@@ -40,9 +40,9 @@ impl<'de> Lexer<'de> {
             '*' => self.add_token(TokenKind::Asterisk),
             '/' => self.add_token(TokenKind::ForwardSlash),
             '%' => self.add_token(TokenKind::Percent),
-            '&' => self.add_token(TokenKind::And),
-            '|' => self.add_token(TokenKind::Or),
-            '^' => self.add_token(TokenKind::Xor),
+            '&' => self.add_token(TokenKind::Ampersand),
+            '|' => self.add_token(TokenKind::Bar),
+            '^' => self.add_token(TokenKind::Caret),
             '>' if self.try_consume('>') => {
                 self.add_token(TokenKind::RightShift);
             }
