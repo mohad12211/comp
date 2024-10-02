@@ -45,6 +45,76 @@ impl IrcGenerator {
                 dst
             }
             ast::Expr::Binary {
+                operator: ast::BinaryOp::And,
+                left,
+                right,
+            } => {
+                let result_var = self.gen_temp();
+                let result = irc::Value::Var(result_var);
+                let v1 = self.gen_expr(left, instructions);
+                let false_label = self.gen_label("and_false");
+                let end_label = self.gen_label("and_end");
+
+                instructions.push(irc::Instruction::JumpIfZero {
+                    condition: v1,
+                    target: false_label.clone(),
+                });
+                let v2 = self.gen_expr(right, instructions);
+                instructions.push(irc::Instruction::JumpIfZero {
+                    condition: v2,
+                    target: false_label.clone(),
+                });
+                instructions.push(irc::Instruction::Copy {
+                    src: irc::Value::Constant(1),
+                    dst: result_var,
+                });
+                instructions.push(irc::Instruction::Jump {
+                    target: end_label.clone(),
+                });
+                instructions.push(irc::Instruction::Label(false_label));
+                instructions.push(irc::Instruction::Copy {
+                    src: irc::Value::Constant(0),
+                    dst: result_var,
+                });
+                instructions.push(irc::Instruction::Label(end_label));
+                result
+            }
+            ast::Expr::Binary {
+                operator: ast::BinaryOp::Or,
+                left,
+                right,
+            } => {
+                let result_var = self.gen_temp();
+                let result = irc::Value::Var(result_var);
+                let v1 = self.gen_expr(left, instructions);
+                let false_label = self.gen_label("and_false");
+                let end_label = self.gen_label("and_end");
+
+                instructions.push(irc::Instruction::JumpIfNotZero {
+                    condition: v1,
+                    target: false_label.clone(),
+                });
+                let v2 = self.gen_expr(right, instructions);
+                instructions.push(irc::Instruction::JumpIfNotZero {
+                    condition: v2,
+                    target: false_label.clone(),
+                });
+                instructions.push(irc::Instruction::Copy {
+                    src: irc::Value::Constant(1),
+                    dst: result_var,
+                });
+                instructions.push(irc::Instruction::Jump {
+                    target: end_label.clone(),
+                });
+                instructions.push(irc::Instruction::Label(false_label));
+                instructions.push(irc::Instruction::Copy {
+                    src: irc::Value::Constant(0),
+                    dst: result_var,
+                });
+                instructions.push(irc::Instruction::Label(end_label));
+                result
+            }
+            ast::Expr::Binary {
                 operator,
                 left,
                 right,
@@ -65,7 +135,7 @@ impl IrcGenerator {
         }
     }
 
-    fn gen_stmt(&mut self, stmt: ast::Stmt) -> Vec<irc::Instruction> {
+    fn gen_stmt<'a>(&mut self, stmt: ast::Stmt) -> Vec<irc::Instruction> {
         match stmt {
             ast::Stmt::Return(expr) => {
                 let mut instructions = Vec::new();
@@ -82,11 +152,17 @@ impl IrcGenerator {
         old
     }
 
+    fn gen_label(&mut self, prefix: &str) -> String {
+        let label = format!("{prefix}{counter}", counter = self.counter);
+        self.counter += 1;
+        label
+    }
+
     fn gen_unary(operator: ast::UnaryOp) -> irc::UnaryOp {
         match operator {
             ast::UnaryOp::Complement => irc::UnaryOp::Complement,
             ast::UnaryOp::Negate => irc::UnaryOp::Negate,
-            ast::UnaryOp::Not => todo!(),
+            ast::UnaryOp::Not => irc::UnaryOp::Not,
         }
     }
 
@@ -102,14 +178,14 @@ impl IrcGenerator {
             ast::BinaryOp::BitAnd => irc::BinaryOp::And,
             ast::BinaryOp::Xor => irc::BinaryOp::Xor,
             ast::BinaryOp::BitOr => irc::BinaryOp::Or,
-            ast::BinaryOp::And => todo!(),
-            ast::BinaryOp::Or => todo!(),
-            ast::BinaryOp::Equal => todo!(),
-            ast::BinaryOp::NotEqual => todo!(),
-            ast::BinaryOp::LessThan => todo!(),
-            ast::BinaryOp::LessOrEqual => todo!(),
-            ast::BinaryOp::GreaterThan => todo!(),
-            ast::BinaryOp::GreaterOrEqual => todo!(),
+            ast::BinaryOp::And => irc::BinaryOp::And,
+            ast::BinaryOp::Or => irc::BinaryOp::Or,
+            ast::BinaryOp::Equal => irc::BinaryOp::Equal,
+            ast::BinaryOp::NotEqual => irc::BinaryOp::NotEqual,
+            ast::BinaryOp::LessThan => irc::BinaryOp::LessThan,
+            ast::BinaryOp::LessOrEqual => irc::BinaryOp::LessOrEqual,
+            ast::BinaryOp::GreaterThan => irc::BinaryOp::GreaterThan,
+            ast::BinaryOp::GreaterOrEqual => irc::BinaryOp::GreaterOrEqual,
         }
     }
 }

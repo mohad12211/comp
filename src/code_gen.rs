@@ -85,8 +85,19 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
                         dst,
                     },
                 ],
+                irc::BinaryOp::Equal => todo!(),
+                irc::BinaryOp::NotEqual => todo!(),
+                irc::BinaryOp::LessThan => todo!(),
+                irc::BinaryOp::LessOrEqual => todo!(),
+                irc::BinaryOp::GreaterThan => todo!(),
+                irc::BinaryOp::GreaterOrEqual => todo!(),
             }
         }
+        irc::Instruction::Copy { src, dst } => todo!(),
+        irc::Instruction::Jump { target } => todo!(),
+        irc::Instruction::JumpIfZero { condition, target } => todo!(),
+        irc::Instruction::JumpIfNotZero { condition, target } => todo!(),
+        irc::Instruction::Label(_) => todo!(),
     }
 }
 
@@ -101,6 +112,7 @@ fn gen_unary(operator: &irc::UnaryOp) -> asm_ast::UnaryOp {
     match operator {
         irc::UnaryOp::Complement => asm_ast::UnaryOp::Not,
         irc::UnaryOp::Negate => asm_ast::UnaryOp::Neg,
+        irc::UnaryOp::Not => todo!(),
     }
 }
 

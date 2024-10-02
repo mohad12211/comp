@@ -13,6 +13,7 @@ pub enum Value {
 pub enum UnaryOp {
     Complement,
     Negate,
+    Not,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,6 +28,12 @@ pub enum BinaryOp {
     And,
     Xor,
     Or,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessOrEqual,
+    GreaterThan,
+    GreaterOrEqual,
 }
 
 #[derive(Debug)]
@@ -43,6 +50,22 @@ pub enum Instruction {
         src2: Value,
         dst: usize,
     },
+    Copy {
+        src: Value,
+        dst: usize,
+    },
+    Jump {
+        target: String,
+    },
+    JumpIfZero {
+        condition: Value,
+        target: String,
+    },
+    JumpIfNotZero {
+        condition: Value,
+        target: String,
+    },
+    Label(String),
 }
 
 #[derive(Debug)]
