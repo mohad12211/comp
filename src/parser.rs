@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{BinaryOp, Expr, Function, Program, Stmt, UnaryOp},
+    ast::{BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -78,9 +78,35 @@ impl<'de> Parser<'de> {
         self.expect(TokenKind::Void)?;
         self.expect(TokenKind::RightParen)?;
         self.expect(TokenKind::LeftBrace)?;
-        let body = self.statement()?;
-        self.expect(TokenKind::RightBrace)?;
+        let mut body = Vec::new();
+        while self
+            .tokens
+            .first()
+            .is_some_and(|token| !matches!(token.kind, TokenKind::RightBrace))
+        {
+            let block_item = self.block_item()?;
+            body.push(block_item);
+        }
+        let _right_brace_token = self.consume();
         Ok(Function { name, body })
+    }
+
+    fn block_item(&mut self) -> Result<BlockItem, ParseError> {
+        match self.tokens.first().map(|token| token.kind) {
+            Some(TokenKind::Int) => Ok(BlockItem::Decleration(self.decleration()?)),
+            _ => Ok(BlockItem::Statement(self.statement()?)),
+        }
+    }
+
+    fn decleration(&mut self) -> Result<Decleration, ParseError> {
+        self.expect(TokenKind::Int)?;
+        let name = self.expect(TokenKind::Identifier)?.lexeme.to_string();
+        let mut init = None;
+        if self.try_consume(TokenKind::Equal).is_some() {
+            init = Some(self.expression(0)?);
+        }
+        self.expect(TokenKind::Semicolon)?;
+        Ok(Decleration::Decleration { name, init })
     }
 
     fn expect(&mut self, expected: TokenKind) -> Result<Token<'de>, ParseError> {
@@ -106,11 +132,27 @@ impl<'de> Parser<'de> {
         *token
     }
 
+    fn try_consume(&mut self, expected: TokenKind) -> Option<Token<'de>> {
+        if let Some(token) = self.tokens.first().filter(|token| token.kind == expected) {
+            self.tokens = &self.tokens[1..];
+            Some(*token)
+        } else {
+            None
+        }
+    }
+
     fn statement(&mut self) -> Result<Stmt, ParseError> {
-        self.expect(TokenKind::Return)?;
-        let return_value = self.expression(0)?;
-        self.expect(TokenKind::Semicolon)?;
-        Ok(Stmt::Return(return_value))
+        if self.try_consume(TokenKind::Return).is_some() {
+            let return_value = self.expression(0)?;
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::Return(return_value))
+        } else if self.try_consume(TokenKind::Semicolon).is_some() {
+            Ok(Stmt::Null)
+        } else {
+            let expr = self.expression(0)?;
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::Expression(expr))
+        }
     }
 
     fn factor(&mut self) -> Result<Expr, ParseError> {
@@ -130,6 +172,10 @@ impl<'de> Parser<'de> {
                 self.expect(TokenKind::RightParen)?;
                 Ok(inner)
             }
+            Some(TokenKind::Identifier) => {
+                let name = self.consume().lexeme.to_string();
+                Ok(Expr::Var(name))
+            }
             _ => Err(ParseError::InvalidFactor {
                 line: self
                     .tokens
@@ -145,26 +191,27 @@ impl<'de> Parser<'de> {
         Ok(Expr::Unary { operator, right })
     }
 
-    fn binary_op(token: &Token) -> Option<(BinaryOp, usize)> {
+    fn operator_and_precedence(token: &Token) -> Option<(Option<BinaryOp>, usize)> {
         match token.kind {
-            TokenKind::DoubleBar => Some((BinaryOp::Or, 5)),
-            TokenKind::DoubleAmpersand => Some((BinaryOp::And, 10)),
-            TokenKind::Bar => Some((BinaryOp::BitOr, 15)),
-            TokenKind::Caret => Some((BinaryOp::Xor, 20)),
-            TokenKind::Ampersand => Some((BinaryOp::BitAnd, 25)),
-            TokenKind::DoubleEqual => Some((BinaryOp::Equal, 30)),
-            TokenKind::BangEqual => Some((BinaryOp::NotEqual, 30)),
-            TokenKind::Greater => Some((BinaryOp::GreaterThan, 35)),
-            TokenKind::GreaterEqual => Some((BinaryOp::GreaterOrEqual, 35)),
-            TokenKind::Less => Some((BinaryOp::LessThan, 35)),
-            TokenKind::LessEqual => Some((BinaryOp::LessOrEqual, 35)),
-            TokenKind::LeftShift => Some((BinaryOp::LeftShift, 40)),
-            TokenKind::RightShift => Some((BinaryOp::RightShift, 40)),
-            TokenKind::Hyphen => Some((BinaryOp::Subtract, 45)),
-            TokenKind::Plus => Some((BinaryOp::Add, 45)),
-            TokenKind::Asterisk => Some((BinaryOp::Multiply, 50)),
-            TokenKind::ForwardSlash => Some((BinaryOp::Divide, 50)),
-            TokenKind::Percent => Some((BinaryOp::Remainder, 50)),
+            TokenKind::DoubleBar => Some((Some(BinaryOp::Or), 5)),
+            TokenKind::DoubleAmpersand => Some((Some(BinaryOp::And), 10)),
+            TokenKind::Bar => Some((Some(BinaryOp::BitOr), 15)),
+            TokenKind::Caret => Some((Some(BinaryOp::Xor), 20)),
+            TokenKind::Ampersand => Some((Some(BinaryOp::BitAnd), 25)),
+            TokenKind::DoubleEqual => Some((Some(BinaryOp::Equal), 30)),
+            TokenKind::BangEqual => Some((Some(BinaryOp::NotEqual), 30)),
+            TokenKind::Greater => Some((Some(BinaryOp::GreaterThan), 35)),
+            TokenKind::GreaterEqual => Some((Some(BinaryOp::GreaterOrEqual), 35)),
+            TokenKind::Less => Some((Some(BinaryOp::LessThan), 35)),
+            TokenKind::LessEqual => Some((Some(BinaryOp::LessOrEqual), 35)),
+            TokenKind::LeftShift => Some((Some(BinaryOp::LeftShift), 40)),
+            TokenKind::RightShift => Some((Some(BinaryOp::RightShift), 40)),
+            TokenKind::Hyphen => Some((Some(BinaryOp::Subtract), 45)),
+            TokenKind::Plus => Some((Some(BinaryOp::Add), 45)),
+            TokenKind::Asterisk => Some((Some(BinaryOp::Multiply), 50)),
+            TokenKind::ForwardSlash => Some((Some(BinaryOp::Divide), 50)),
+            TokenKind::Percent => Some((Some(BinaryOp::Remainder), 50)),
+            TokenKind::Equal => Some((None, 1)),
             _ => None,
         }
     }
@@ -174,16 +221,25 @@ impl<'de> Parser<'de> {
         while let Some((operator, prec)) = self
             .tokens
             .first()
-            .and_then(|token| Self::binary_op(token))
+            .and_then(|token| Self::operator_and_precedence(token))
             .filter(|&(_, prec)| prec >= min_prec)
         {
-            let _operator_token = self.consume();
-            let right = self.expression(prec + 1)?;
-            left = Expr::Binary {
-                operator,
-                left: left.into(),
-                right: right.into(),
-            };
+            if let Some(operator) = operator {
+                let _operator_token = self.consume();
+                let right = self.expression(prec + 1)?;
+                left = Expr::Binary {
+                    operator,
+                    left: left.into(),
+                    right: right.into(),
+                };
+            } else {
+                let _equal_token = self.consume();
+                let right = self.expression(prec)?;
+                left = Expr::Assignment {
+                    left: left.into(),
+                    right: right.into(),
+                }
+            }
         }
         Ok(left)
     }

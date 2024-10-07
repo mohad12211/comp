@@ -21,7 +21,8 @@ impl IrcGenerator {
     fn gen_function<'a>(&mut self, function: ast::Function<'a>) -> irc::Function<'a> {
         irc::Function {
             name: function.name,
-            instructons: self.gen_stmt(function.body),
+            // instructons: self.gen_stmt(function.body),
+            instructons: todo!(),
         }
     }
 
@@ -132,6 +133,8 @@ impl IrcGenerator {
                 });
                 dst
             }
+            ast::Expr::Var(_) => todo!(),
+            ast::Expr::Assignment { left, right } => todo!(),
         }
     }
 
@@ -143,6 +146,8 @@ impl IrcGenerator {
                 instructions.push(irc::Instruction::Ret(value));
                 instructions
             }
+            ast::Stmt::Expression(expr) => todo!(),
+            ast::Stmt::Null => todo!(),
         }
     }
 

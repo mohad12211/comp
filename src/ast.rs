@@ -15,6 +15,11 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    Var(String),
+    Assignment {
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -49,10 +54,23 @@ pub enum BinaryOp {
 #[derive(Debug)]
 pub enum Stmt {
     Return(Expr),
+    Expression(Expr),
+    Null,
+}
+
+#[derive(Debug)]
+pub enum Decleration {
+    Decleration { name: String, init: Option<Expr> },
+}
+
+#[derive(Debug)]
+pub enum BlockItem {
+    Statement(Stmt),
+    Decleration(Decleration),
 }
 
 #[derive(Debug)]
 pub struct Function<'a> {
     pub name: &'a str,
-    pub body: Stmt,
+    pub body: Vec<BlockItem>,
 }

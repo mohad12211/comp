@@ -20,6 +20,7 @@ pub enum TokenKind {
     LeftShift,
     RightShift,
     Bang,
+    Equal,
     DoubleAmpersand,
     DoubleBar,
     DoubleEqual,

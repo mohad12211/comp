@@ -56,6 +56,7 @@ impl<'de> Lexer<'de> {
             '!' if self.try_consume('=') => self.add_token(TokenKind::BangEqual),
             '!' => self.add_token(TokenKind::Bang),
             '=' if self.try_consume('=') => self.add_token(TokenKind::DoubleEqual),
+            '=' => self.add_token(TokenKind::Equal),
             ' ' | '\t' => {}
             '\n' => self.line += 1,
             c if c.is_ascii_digit() => self.number()?,
@@ -116,7 +117,7 @@ impl<'de> Lexer<'de> {
 
     fn identifier(&mut self) {
         while let Some(c) = self.rest[self.len..].chars().next() {
-            if !c.is_alphanumeric() {
+            if !c.is_alphanumeric() && c != '_' {
                 break;
             }
             self.consume();
