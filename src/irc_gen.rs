@@ -6,8 +6,8 @@ pub struct IrcGenerator {
 }
 
 impl IrcGenerator {
-    pub fn gen_program(program: ast::Program<'_>) -> (irc::Program<'_>, usize) {
-        let mut irc_generator = IrcGenerator { counter: 1 };
+    pub fn gen_program(program: ast::Program<'_>, counter: usize) -> (irc::Program<'_>, usize) {
+        let mut irc_generator = IrcGenerator { counter };
         (
             match program {
                 ast::Program::Function(function) => {

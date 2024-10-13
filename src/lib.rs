@@ -8,6 +8,7 @@ pub mod irc;
 pub mod irc_gen;
 pub mod lexer;
 pub mod parser;
+pub mod resolution;
 pub mod token;
 
 #[derive(Debug)]
@@ -18,6 +19,7 @@ pub enum Error {
     Lexer(String),
     InvalidToken(String),
     Parser(ParseError),
+    Resolver(String),
 }
 
 impl From<ParseError> for Error {

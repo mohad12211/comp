@@ -5,7 +5,10 @@ use std::{
 };
 
 use clap::Parser;
-use comp::{code_emission, code_gen, irc_gen::IrcGenerator, lexer::Lexer, parser, Error, Result};
+use comp::{
+    code_emission, code_gen, irc_gen::IrcGenerator, lexer::Lexer, parser, resolution::Resolver,
+    Error, Result,
+};
 
 /// C Compiler
 #[derive(clap::Parser, Debug)]
@@ -30,6 +33,10 @@ struct Cli {
     /// Stop after generating irc
     #[arg(short, long, alias = "tacky")]
     irc: bool,
+
+    /// Stop after semantic analysis
+    #[arg(short, long)]
+    validate: bool,
 
     /// C source code file
     #[arg(required = true)]
@@ -59,11 +66,16 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
         return Ok(());
     }
     let mut parser = parser::Parser::new(&lexer);
-    let ast = parser.parse()?;
+    let mut ast = parser.parse()?;
     if cli.parse {
         return Ok(());
     }
-    let (irc, stack_allocation) = IrcGenerator::gen_program(ast);
+    let mut resolver = Resolver::new(1);
+    resolver.resolve_program(&mut ast)?;
+    if cli.validate {
+        return Ok(());
+    }
+    let (irc, stack_allocation) = IrcGenerator::gen_program(ast, resolver.counter + 1);
     if cli.irc {
         return Ok(());
     }
@@ -98,7 +110,7 @@ fn run(file: &str, cli: &Cli) -> Result<()> {
     preprocess(file)?;
     compile(file, cli)?;
     let _ = fs::remove_file(format!("{file}.i"));
-    if cli.assembly || cli.lex || cli.parse || cli.code_gen || cli.irc {
+    if cli.assembly || cli.lex || cli.parse || cli.code_gen || cli.irc || cli.validate {
         return Ok(());
     }
     assemble(file)?;
@@ -121,6 +133,7 @@ fn main() -> ExitCode {
                 Error::Lexer(err) => eprintln!("Lexer Error:\n - {err}"),
                 Error::InvalidToken(err) => eprintln!("Invalid Token:\n - {err}"),
                 Error::Parser(parse_error) => eprintln!("Parser Error:\n - {parse_error}"),
+                Error::Resolver(err) => eprintln!("Variable Resolution Error:\n - {err}"),
             };
             let _ = fs::remove_file(format!("{file}.i"));
             let _ = fs::remove_file(format!("{file}.s"));
