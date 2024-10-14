@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
+    ast::{AssignmentOp, BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -193,57 +193,109 @@ impl<'de> Parser<'de> {
         Ok(Expr::Unary { operator, right })
     }
 
-    fn operator_and_precedence(token: &Token) -> Option<(Option<BinaryOp>, usize)> {
+    fn precedence(token: &Token) -> Option<usize> {
         match token.kind {
-            TokenKind::DoubleBar => Some((Some(BinaryOp::Or), 5)),
-            TokenKind::DoubleAmpersand => Some((Some(BinaryOp::And), 10)),
-            TokenKind::Bar => Some((Some(BinaryOp::BitOr), 15)),
-            TokenKind::Caret => Some((Some(BinaryOp::Xor), 20)),
-            TokenKind::Ampersand => Some((Some(BinaryOp::BitAnd), 25)),
-            TokenKind::DoubleEqual => Some((Some(BinaryOp::Equal), 30)),
-            TokenKind::BangEqual => Some((Some(BinaryOp::NotEqual), 30)),
-            TokenKind::Greater => Some((Some(BinaryOp::GreaterThan), 35)),
-            TokenKind::GreaterEqual => Some((Some(BinaryOp::GreaterOrEqual), 35)),
-            TokenKind::Less => Some((Some(BinaryOp::LessThan), 35)),
-            TokenKind::LessEqual => Some((Some(BinaryOp::LessOrEqual), 35)),
-            TokenKind::LeftShift => Some((Some(BinaryOp::LeftShift), 40)),
-            TokenKind::RightShift => Some((Some(BinaryOp::RightShift), 40)),
-            TokenKind::Hyphen => Some((Some(BinaryOp::Subtract), 45)),
-            TokenKind::Plus => Some((Some(BinaryOp::Add), 45)),
-            TokenKind::Asterisk => Some((Some(BinaryOp::Multiply), 50)),
-            TokenKind::ForwardSlash => Some((Some(BinaryOp::Divide), 50)),
-            TokenKind::Percent => Some((Some(BinaryOp::Remainder), 50)),
-            TokenKind::Equal => Some((None, 1)),
+            TokenKind::DoubleBar => Some(5),
+            TokenKind::DoubleAmpersand => Some(9),
+            TokenKind::Bar => Some(15),
+            TokenKind::Caret => Some(20),
+            TokenKind::Ampersand => Some(25),
+            TokenKind::DoubleEqual => Some(30),
+            TokenKind::BangEqual => Some(30),
+            TokenKind::Greater => Some(35),
+            TokenKind::GreaterEqual => Some(35),
+            TokenKind::Less => Some(35),
+            TokenKind::LessEqual => Some(35),
+            TokenKind::LeftShift => Some(40),
+            TokenKind::RightShift => Some(40),
+            TokenKind::Hyphen => Some(45),
+            TokenKind::Plus => Some(45),
+            TokenKind::Asterisk => Some(50),
+            TokenKind::ForwardSlash => Some(50),
+            TokenKind::Percent => Some(50),
+            TokenKind::Equal => Some(1),
+            TokenKind::PlusEqual => Some(1),
+            TokenKind::HyphenEqual => Some(1),
+            TokenKind::AsteriskEqual => Some(1),
+            TokenKind::ForwardSlashEqual => Some(1),
+            TokenKind::PercentEqual => Some(1),
+            TokenKind::AmpersandEqual => Some(1),
+            TokenKind::BarEqual => Some(1),
+            TokenKind::CaretEqual => Some(1),
+            TokenKind::LeftShiftEqual => Some(1),
+            TokenKind::RightShiftEqual => Some(1),
             _ => None,
         }
     }
 
     fn expression(&mut self, min_prec: usize) -> Result<Expr, ParseError> {
         let mut left = self.factor()?;
-        while let Some((operator, prec)) = self
+        while let Some(prec) = self
             .tokens
             .first()
-            .and_then(|token| Self::operator_and_precedence(token))
-            .filter(|&(_, prec)| prec >= min_prec)
+            .and_then(|token| Self::precedence(token))
+            .filter(|&prec| prec >= min_prec)
         {
-            if let Some(operator) = operator {
-                let _operator_token = self.consume();
-                let right = self.expression(prec + 1)?;
-                left = Expr::Binary {
-                    operator,
-                    left: left.into(),
-                    right: right.into(),
-                };
-            } else {
-                let _equal_token = self.consume();
+            // TODO: maybe use match
+            let token = self.consume();
+            if let Some(assignment_op) = Self::assignment_op(token.kind) {
                 let right = self.expression(prec)?;
                 left = Expr::Assignment {
                     left: left.into(),
                     right: right.into(),
+                    operator: assignment_op,
                 }
+            } else if let Some(binary_op) = Self::binary_op(token.kind) {
+                let right = self.expression(prec + 1)?;
+                left = Expr::Binary {
+                    operator: binary_op,
+                    left: left.into(),
+                    right: right.into(),
+                };
             }
         }
         Ok(left)
+    }
+
+    fn assignment_op(token: TokenKind) -> Option<AssignmentOp> {
+        match token {
+            TokenKind::Equal => Some(AssignmentOp::Equal),
+            TokenKind::PlusEqual => Some(AssignmentOp::PlusEqual),
+            TokenKind::HyphenEqual => Some(AssignmentOp::SubtractEqual),
+            TokenKind::AsteriskEqual => Some(AssignmentOp::MultipleEqual),
+            TokenKind::ForwardSlashEqual => Some(AssignmentOp::DivideEqual),
+            TokenKind::PercentEqual => Some(AssignmentOp::RemainderEqual),
+            TokenKind::AmpersandEqual => Some(AssignmentOp::BitAndEqual),
+            TokenKind::BarEqual => Some(AssignmentOp::BitOrEqual),
+            TokenKind::CaretEqual => Some(AssignmentOp::XorEqual),
+            TokenKind::RightShiftEqual => Some(AssignmentOp::RightShiftEqual),
+            TokenKind::LeftShiftEqual => Some(AssignmentOp::LeftShiftEqual),
+            _ => None,
+        }
+    }
+
+    fn binary_op(token: TokenKind) -> Option<BinaryOp> {
+        match token {
+            TokenKind::DoubleBar => Some(BinaryOp::Or),
+            TokenKind::DoubleAmpersand => Some(BinaryOp::And),
+            TokenKind::Bar => Some(BinaryOp::BitOr),
+            TokenKind::Caret => Some(BinaryOp::Xor),
+            TokenKind::Ampersand => Some(BinaryOp::BitAnd),
+            TokenKind::DoubleEqual => Some(BinaryOp::Equal),
+            TokenKind::BangEqual => Some(BinaryOp::NotEqual),
+            TokenKind::Greater => Some(BinaryOp::GreaterThan),
+            TokenKind::GreaterEqual => Some(BinaryOp::GreaterOrEqual),
+            TokenKind::Less => Some(BinaryOp::LessThan),
+            TokenKind::LessEqual => Some(BinaryOp::LessOrEqual),
+            TokenKind::LeftShift => Some(BinaryOp::LeftShift),
+            TokenKind::RightShift => Some(BinaryOp::RightShift),
+            TokenKind::Hyphen => Some(BinaryOp::Subtract),
+            TokenKind::Plus => Some(BinaryOp::Add),
+            TokenKind::Asterisk => Some(BinaryOp::Multiply),
+            TokenKind::ForwardSlash => Some(BinaryOp::Divide),
+            TokenKind::Percent => Some(BinaryOp::Remainder),
+            _ => None,
+        }
     }
 
     fn get_last_line(&self) -> usize {

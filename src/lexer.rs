@@ -36,26 +36,37 @@ impl<'de> Lexer<'de> {
             '}' => self.add_token(TokenKind::RightBrace),
             ';' => self.add_token(TokenKind::Semicolon),
             '~' => self.add_token(TokenKind::Tilde),
+            '+' if self.try_consume("+") => self.add_token(TokenKind::DoublePlus),
+            '+' if self.try_consume("=") => self.add_token(TokenKind::PlusEqual),
             '+' => self.add_token(TokenKind::Plus),
+            '*' if self.try_consume("=") => self.add_token(TokenKind::AsteriskEqual),
             '*' => self.add_token(TokenKind::Asterisk),
+            '/' if self.try_consume("=") => self.add_token(TokenKind::ForwardSlashEqual),
             '/' => self.add_token(TokenKind::ForwardSlash),
+            '%' if self.try_consume("=") => self.add_token(TokenKind::PercentEqual),
             '%' => self.add_token(TokenKind::Percent),
+            '^' if self.try_consume("=") => self.add_token(TokenKind::CaretEqual),
             '^' => self.add_token(TokenKind::Caret),
-            '&' if self.try_consume('&') => self.add_token(TokenKind::DoubleAmpersand),
+            '&' if self.try_consume("&") => self.add_token(TokenKind::DoubleAmpersand),
+            '&' if self.try_consume("=") => self.add_token(TokenKind::AmpersandEqual),
             '&' => self.add_token(TokenKind::Ampersand),
-            '|' if self.try_consume('|') => self.add_token(TokenKind::DoubleBar),
+            '|' if self.try_consume("|") => self.add_token(TokenKind::DoubleBar),
+            '|' if self.try_consume("=") => self.add_token(TokenKind::BarEqual),
             '|' => self.add_token(TokenKind::Bar),
-            '>' if self.try_consume('>') => self.add_token(TokenKind::RightShift),
-            '>' if self.try_consume('=') => self.add_token(TokenKind::GreaterEqual),
+            '>' if self.try_consume(">=") => self.add_token(TokenKind::RightShiftEqual),
+            '>' if self.try_consume(">") => self.add_token(TokenKind::RightShift),
+            '>' if self.try_consume("=") => self.add_token(TokenKind::GreaterEqual),
             '>' => self.add_token(TokenKind::Greater),
-            '<' if self.try_consume('<') => self.add_token(TokenKind::LeftShift),
-            '<' if self.try_consume('=') => self.add_token(TokenKind::LessEqual),
+            '<' if self.try_consume("<=") => self.add_token(TokenKind::LeftShiftEqual),
+            '<' if self.try_consume("<") => self.add_token(TokenKind::LeftShift),
+            '<' if self.try_consume("=") => self.add_token(TokenKind::LessEqual),
             '<' => self.add_token(TokenKind::Less),
-            '-' if self.try_consume('-') => self.add_token(TokenKind::DoubleHyphen),
+            '-' if self.try_consume("-") => self.add_token(TokenKind::DoubleHyphen),
+            '-' if self.try_consume("=") => self.add_token(TokenKind::HyphenEqual),
             '-' => self.add_token(TokenKind::Hyphen),
-            '!' if self.try_consume('=') => self.add_token(TokenKind::BangEqual),
+            '!' if self.try_consume("=") => self.add_token(TokenKind::BangEqual),
             '!' => self.add_token(TokenKind::Bang),
-            '=' if self.try_consume('=') => self.add_token(TokenKind::DoubleEqual),
+            '=' if self.try_consume("=") => self.add_token(TokenKind::DoubleEqual),
             '=' => self.add_token(TokenKind::Equal),
             ' ' | '\t' => {}
             '\n' => self.line += 1,
@@ -80,9 +91,11 @@ impl<'de> Lexer<'de> {
         c
     }
 
-    fn try_consume(&mut self, expected: char) -> bool {
+    fn try_consume(&mut self, expected: &str) -> bool {
         if self.rest[self.len..].starts_with(expected) {
-            self.consume();
+            for _ in 0..expected.len() {
+                self.consume();
+            }
             true
         } else {
             false

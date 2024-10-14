@@ -17,9 +17,25 @@ pub enum Expr {
     },
     Var(String),
     Assignment {
+        operator: AssignmentOp,
         left: Box<Expr>,
         right: Box<Expr>,
     },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum AssignmentOp {
+    Equal,
+    PlusEqual,
+    SubtractEqual,
+    MultipleEqual,
+    DivideEqual,
+    RemainderEqual,
+    BitAndEqual,
+    BitOrEqual,
+    XorEqual,
+    RightShiftEqual,
+    LeftShiftEqual,
 }
 
 #[derive(Debug, Clone, Copy)]

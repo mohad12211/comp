@@ -16,7 +16,7 @@ impl IrcGenerator {
                     irc::Program::Function(irc_generator.gen_function(function))
                 }
             },
-            (irc_generator.counter - 1) * 4,
+            irc_generator.counter * 4,
         )
     }
 
@@ -158,15 +158,31 @@ impl IrcGenerator {
                 dst
             }
             ast::Expr::Var(name) => irc::Value::Var(name),
-            ast::Expr::Assignment { left, right } => {
+            ast::Expr::Assignment {
+                left,
+                right,
+                operator,
+            } => {
                 let ast::Expr::Var(name) = *left else {
                     unreachable!("Semantic analysis")
                 };
-                let result = self.gen_expr(*right, instructions);
-                instructions.push(irc::Instruction::Copy {
-                    src: result,
-                    dst: name.clone(),
-                });
+                let right = self.gen_expr(*right, instructions);
+                match operator {
+                    ast::AssignmentOp::Equal => {
+                        instructions.push(irc::Instruction::Copy {
+                            src: right,
+                            dst: name.clone(),
+                        });
+                    }
+                    operator @ _ => {
+                        instructions.push(irc::Instruction::Binary {
+                            operator: Self::gen_assignment(operator),
+                            src1: irc::Value::Var(name.clone()),
+                            src2: right,
+                            dst: name.clone(),
+                        });
+                    }
+                };
                 irc::Value::Var(name)
             }
         }
@@ -199,6 +215,22 @@ impl IrcGenerator {
         let label = format!("{prefix}{counter}", counter = self.counter);
         self.counter += 1;
         label
+    }
+
+    fn gen_assignment(operator: ast::AssignmentOp) -> irc::BinaryOp {
+        match operator {
+            ast::AssignmentOp::Equal => unreachable!("Specially handled"),
+            ast::AssignmentOp::PlusEqual => irc::BinaryOp::Add,
+            ast::AssignmentOp::SubtractEqual => irc::BinaryOp::Subtract,
+            ast::AssignmentOp::MultipleEqual => irc::BinaryOp::Multiply,
+            ast::AssignmentOp::DivideEqual => irc::BinaryOp::Divide,
+            ast::AssignmentOp::RemainderEqual => irc::BinaryOp::Remainder,
+            ast::AssignmentOp::BitAndEqual => irc::BinaryOp::BitAnd,
+            ast::AssignmentOp::BitOrEqual => irc::BinaryOp::BitOr,
+            ast::AssignmentOp::XorEqual => irc::BinaryOp::Xor,
+            ast::AssignmentOp::RightShiftEqual => irc::BinaryOp::RightShift,
+            ast::AssignmentOp::LeftShiftEqual => irc::BinaryOp::LeftShift,
+        }
     }
 
     fn gen_unary(operator: ast::UnaryOp) -> irc::UnaryOp {
