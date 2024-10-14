@@ -11,6 +11,7 @@ pub enum TokenKind {
     Hyphen,
     DoubleHyphen,
     Plus,
+    PlusEqual,
     Asterisk,
     ForwardSlash,
     Percent,

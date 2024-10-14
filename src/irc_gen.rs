@@ -16,7 +16,7 @@ impl IrcGenerator {
                     irc::Program::Function(irc_generator.gen_function(function))
                 }
             },
-            (irc_generator.counter - 1) * 4,
+            irc_generator.counter * 4,
         )
     }
 
@@ -158,15 +158,31 @@ impl IrcGenerator {
                 dst
             }
             ast::Expr::Var(name) => irc::Value::Var(name),
-            ast::Expr::Assignment { left, right } => {
+            ast::Expr::Assignment {
+                left,
+                right,
+                operator,
+            } => {
                 let ast::Expr::Var(name) = *left else {
                     unreachable!("Semantic analysis")
                 };
-                let result = self.gen_expr(*right, instructions);
-                instructions.push(irc::Instruction::Copy {
-                    src: result,
-                    dst: name.clone(),
-                });
+                let right = self.gen_expr(*right, instructions);
+                match operator {
+                    ast::AssignmentOp::Equal => {
+                        instructions.push(irc::Instruction::Copy {
+                            src: right,
+                            dst: name.clone(),
+                        });
+                    }
+                    ast::AssignmentOp::PlusEqual => {
+                        instructions.push(irc::Instruction::Binary {
+                            operator: irc::BinaryOp::Add,
+                            src1: irc::Value::Var(name.clone()),
+                            src2: right,
+                            dst: name.clone(),
+                        });
+                    }
+                };
                 irc::Value::Var(name)
             }
         }

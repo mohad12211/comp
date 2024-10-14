@@ -36,6 +36,7 @@ impl<'de> Lexer<'de> {
             '}' => self.add_token(TokenKind::RightBrace),
             ';' => self.add_token(TokenKind::Semicolon),
             '~' => self.add_token(TokenKind::Tilde),
+            '+' if self.try_consume('=') => self.add_token(TokenKind::PlusEqual),
             '+' => self.add_token(TokenKind::Plus),
             '*' => self.add_token(TokenKind::Asterisk),
             '/' => self.add_token(TokenKind::ForwardSlash),

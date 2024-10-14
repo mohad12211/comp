@@ -82,7 +82,11 @@ impl Resolver {
                     .ok_or_else(|| Error::Resolver("Undeclared variable".to_string()))?
                     .clone();
             }
-            Expr::Assignment { left, right } => {
+            Expr::Assignment {
+                left,
+                right,
+                operator: _,
+            } => {
                 if !matches!(left.as_ref(), Expr::Var(_)) {
                     return Err(Error::Resolver("Invalid lavlue".to_string()));
                 }
