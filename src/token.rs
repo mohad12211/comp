@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
     LeftParen,
     RightParen,

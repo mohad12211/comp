@@ -24,7 +24,7 @@ impl Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // TODO: not good error reporting
         match self {
-            ParseError::UnexpectedToken {
+            Self::UnexpectedToken {
                 expected,
                 got,
                 line,
@@ -32,10 +32,10 @@ impl Display for ParseError {
                 f,
                 "Unexpected token at line: {line}, got: {got:?}, expected: {expected:?}"
             ),
-            ParseError::InvalidExpression { line } => {
+            Self::InvalidExpression { line } => {
                 write!(f, "Invalid Expression at line: {line}.")
             }
-            ParseError::InvalidFactor { line } => {
+            Self::InvalidFactor { line } => {
                 write!(f, "Invalid Factor at line: {line}.")
             }
         }
@@ -56,15 +56,16 @@ impl<'de> Parser<'de> {
     }
     pub fn parse(&mut self) -> Result<Program<'de>, ParseError> {
         let program = self.program()?;
-        if let Some(token) = self.tokens.first() {
-            Err(ParseError::UnexpectedToken {
-                expected: None,
-                got: Some(token.kind),
-                line: token.line,
-            })
-        } else {
-            Ok(program)
-        }
+        self.tokens.first().map_or_else(
+            || Ok(program),
+            |token| {
+                Err(ParseError::UnexpectedToken {
+                    expected: None,
+                    got: Some(token.kind),
+                    line: token.line,
+                })
+            },
+        )
     }
 
     fn program(&mut self) -> Result<Program<'de>, ParseError> {
@@ -101,10 +102,11 @@ impl<'de> Parser<'de> {
     fn decleration(&mut self) -> Result<Decleration, ParseError> {
         self.expect(TokenKind::Int)?;
         let name = self.expect(TokenKind::Identifier)?.lexeme.to_string();
-        let mut init = None;
-        if self.try_consume(TokenKind::Equal).is_some() {
-            init = Some(self.expression(0)?);
-        }
+        let init = if self.try_consume(TokenKind::Equal).is_some() {
+            Some(self.expression(0)?)
+        } else {
+            None
+        };
         self.expect(TokenKind::Semicolon)?;
         Ok(Decleration::Decleration { name, init })
     }

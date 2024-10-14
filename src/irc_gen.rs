@@ -9,7 +9,7 @@ pub struct IrcGenerator {
 
 impl IrcGenerator {
     pub fn gen_program(program: ast::Program<'_>, counter: usize) -> (irc::Program<'_>, usize) {
-        let mut irc_generator = IrcGenerator { counter };
+        let mut irc_generator = Self { counter };
         (
             match program {
                 ast::Program::Function(function) => {
@@ -43,7 +43,7 @@ impl IrcGenerator {
                 let value = self.gen_expr(init, &mut instructions);
                 instructions.push(irc::Instruction::Copy {
                     src: value,
-                    dst: name.clone(),
+                    dst: name,
                 });
                 instructions
             }

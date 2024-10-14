@@ -53,8 +53,7 @@ impl Resolver {
                     ));
                 }
                 let unique_name = self.make_temp(name);
-                self.variable_map
-                    .insert(name.to_string(), unique_name.clone());
+                self.variable_map.insert(name.clone(), unique_name.clone());
                 if let Some(init) = init {
                     self.resolve_expr(init)?;
                 }
@@ -80,7 +79,7 @@ impl Resolver {
                 *name = self
                     .variable_map
                     .get(name)
-                    .ok_or(Error::Resolver("Undeclared variable".to_string()))?
+                    .ok_or_else(|| Error::Resolver("Undeclared variable".to_string()))?
                     .clone();
             }
             Expr::Assignment { left, right } => {
