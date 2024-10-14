@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
+    ast::{AssignmentOp, BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -193,7 +193,7 @@ impl<'de> Parser<'de> {
         Ok(Expr::Unary { operator, right })
     }
 
-    fn operator_and_precedence(token: &Token) -> Option<(Option<BinaryOp>, usize)> {
+    fn binary_operator_and_precedence(token: &Token) -> Option<(Option<BinaryOp>, usize)> {
         match token.kind {
             TokenKind::DoubleBar => Some((Some(BinaryOp::Or), 5)),
             TokenKind::DoubleAmpersand => Some((Some(BinaryOp::And), 10)),
@@ -214,6 +214,7 @@ impl<'de> Parser<'de> {
             TokenKind::ForwardSlash => Some((Some(BinaryOp::Divide), 50)),
             TokenKind::Percent => Some((Some(BinaryOp::Remainder), 50)),
             TokenKind::Equal => Some((None, 1)),
+            TokenKind::PlusEqual => Some((None, 1)),
             _ => None,
         }
     }
@@ -223,7 +224,7 @@ impl<'de> Parser<'de> {
         while let Some((operator, prec)) = self
             .tokens
             .first()
-            .and_then(|token| Self::operator_and_precedence(token))
+            .and_then(|token| Self::binary_operator_and_precedence(token))
             .filter(|&(_, prec)| prec >= min_prec)
         {
             if let Some(operator) = operator {
@@ -235,11 +236,17 @@ impl<'de> Parser<'de> {
                     right: right.into(),
                 };
             } else {
-                let _equal_token = self.consume();
+                let token = self.consume();
+                let operator = match token.kind {
+                    TokenKind::Equal => AssignmentOp::Equal,
+                    TokenKind::PlusEqual => AssignmentOp::PlusEqual,
+                    _ => unreachable!(),
+                };
                 let right = self.expression(prec)?;
                 left = Expr::Assignment {
                     left: left.into(),
                     right: right.into(),
+                    operator,
                 }
             }
         }
