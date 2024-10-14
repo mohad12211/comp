@@ -41,7 +41,7 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
                 },
                 asm_ast::Instruction::Mov {
                     src: asm_ast::Operand::Imm(0),
-                    dst,
+                    dst: dst.clone(),
                 },
                 asm_ast::Instruction::SetCC {
                     cond_code: asm_ast::CondCode::E,
@@ -54,7 +54,7 @@ fn gen_instruction(instruction: irc::Instruction) -> Vec<asm_ast::Instruction> {
             vec![
                 asm_ast::Instruction::Mov {
                     src: gen_operand(src),
-                    dst,
+                    dst: dst.clone(),
                 },
                 asm_ast::Instruction::Unary {
                     operator: gen_unary(&operator),
@@ -177,7 +177,7 @@ fn gen_binary_rel(
         },
         asm_ast::Instruction::Mov {
             src: asm_ast::Operand::Imm(0),
-            dst,
+            dst: dst.clone(),
         },
         asm_ast::Instruction::SetCC {
             cond_code,
@@ -195,7 +195,7 @@ fn gen_binary_ins(
     vec![
         asm_ast::Instruction::Mov {
             src: gen_operand(src1),
-            dst,
+            dst: dst.clone(),
         },
         asm_ast::Instruction::Binary {
             operator,
@@ -269,7 +269,7 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
                         asm_ast::Instruction::Idiv(src @ asm_ast::Operand::Imm(_)) => {
                             vec![
                                 asm_ast::Instruction::Mov {
-                                    src: *src,
+                                    src: src.clone(),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::R10),
                                 },
                                 asm_ast::Instruction::Idiv(asm_ast::Operand::Register(
@@ -306,17 +306,17 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
                         } => {
                             vec![
                                 asm_ast::Instruction::Mov {
-                                    src: *src,
+                                    src: src.clone(),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::R11),
                                 },
                                 asm_ast::Instruction::Binary {
                                     operator: *operator,
-                                    operand1: *operand1,
+                                    operand1: operand1.clone(),
                                     operand2: asm_ast::Operand::Register(asm_ast::Register::R11),
                                 },
                                 asm_ast::Instruction::Mov {
                                     src: asm_ast::Operand::Register(asm_ast::Register::R11),
-                                    dst: *src,
+                                    dst: src.clone(),
                                 },
                             ]
                         }
@@ -327,13 +327,13 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
                         } => {
                             vec![
                                 asm_ast::Instruction::Mov {
-                                    src: *src,
+                                    src: src.clone(),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::CX),
                                 },
                                 asm_ast::Instruction::Binary {
                                     operator: *operator,
                                     operand1: asm_ast::Operand::Register(asm_ast::Register::CX),
-                                    operand2: *operand2,
+                                    operand2: operand2.clone(),
                                 },
                             ]
                         }
@@ -358,11 +358,11 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
                         } => {
                             vec![
                                 asm_ast::Instruction::Mov {
-                                    src: *operand2,
+                                    src: operand2.clone(),
                                     dst: asm_ast::Operand::Register(asm_ast::Register::R11),
                                 },
                                 asm_ast::Instruction::Cmp {
-                                    operand1: *operand1,
+                                    operand1: operand1.clone(),
                                     operand2: asm_ast::Operand::Register(asm_ast::Register::R11),
                                 },
                             ]
@@ -376,6 +376,10 @@ pub fn fix_instructions(program: &mut asm_ast::Program, stack_allocation: usize)
 
 fn replace_operand(operand: &mut asm_ast::Operand) {
     if let asm_ast::Operand::Pseudo(counter) = operand {
-        *operand = asm_ast::Operand::Stack(*counter * 4);
+        let (_, index) = counter
+            .split_once('.')
+            .expect("format of counter is temp.{index}");
+        let index: usize = index.parse().expect("index is a usize");
+        *operand = asm_ast::Operand::Stack(index * 4);
     }
 }

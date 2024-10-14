@@ -3,10 +3,10 @@ pub enum Program<'a> {
     Function(Function<'a>),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Constant(i32),
-    Var(usize),
+    Var(String),
 }
 
 #[derive(Debug)]
@@ -42,17 +42,17 @@ pub enum Instruction {
     Unary {
         operator: UnaryOp,
         src: Value,
-        dst: usize,
+        dst: String,
     },
     Binary {
         operator: BinaryOp,
         src1: Value,
         src2: Value,
-        dst: usize,
+        dst: String,
     },
     Copy {
         src: Value,
-        dst: usize,
+        dst: String,
     },
     Jump {
         target: String,

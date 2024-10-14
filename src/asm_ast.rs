@@ -30,11 +30,11 @@ pub enum BinaryOp {
     Shr,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Operand {
     Imm(i32),
     Register(Register),
-    Pseudo(usize),
+    Pseudo(String),
     Stack(usize),
 }
 

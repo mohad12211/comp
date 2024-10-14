@@ -70,12 +70,12 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     if cli.parse {
         return Ok(());
     }
-    let mut resolver = Resolver::new(1);
+    let mut resolver = Resolver::new(0);
     resolver.resolve_program(&mut ast)?;
     if cli.validate {
         return Ok(());
     }
-    let (irc, stack_allocation) = IrcGenerator::gen_program(ast, resolver.counter + 1);
+    let (irc, stack_allocation) = IrcGenerator::gen_program(ast, resolver.counter);
     if cli.irc {
         return Ok(());
     }

@@ -37,7 +37,9 @@ impl Resolver {
     fn resolve_block_item(&mut self, block_item: &mut BlockItem) -> Result<()> {
         match block_item {
             BlockItem::Statement(stmt) => self.resolve_statement(stmt)?,
-            BlockItem::Decleration(decleration) => self.resolve_decleration(decleration)?,
+            BlockItem::Decleration(decleration) => {
+                self.resolve_decleration(decleration)?;
+            }
         }
         Ok(())
     }
@@ -51,10 +53,12 @@ impl Resolver {
                     ));
                 }
                 let unique_name = self.make_temp(name);
-                self.variable_map.insert(name.to_string(), unique_name);
+                self.variable_map
+                    .insert(name.to_string(), unique_name.clone());
                 if let Some(init) = init {
                     self.resolve_expr(init)?;
                 }
+                *name = unique_name;
             }
         }
         Ok(())
@@ -77,7 +81,7 @@ impl Resolver {
                     .variable_map
                     .get(name)
                     .ok_or(Error::Resolver("Undeclared variable".to_string()))?
-                    .clone()
+                    .clone();
             }
             Expr::Assignment { left, right } => {
                 if !matches!(left.as_ref(), Expr::Var(_)) {
@@ -102,6 +106,6 @@ impl Resolver {
     fn make_temp(&mut self, name: &str) -> String {
         let unique_name = format!("{name}.{counter}", counter = self.counter);
         self.counter += 1;
-        return unique_name;
+        unique_name
     }
 }
