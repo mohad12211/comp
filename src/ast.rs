@@ -21,6 +21,11 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
     },
+    Conditional {
+        condition: Box<Expr>,
+        then_branch: Box<Expr>,
+        else_branch: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -75,6 +80,11 @@ pub enum BinaryOp {
 pub enum Stmt {
     Return(Expr),
     Expression(Expr),
+    If {
+        condition: Expr,
+        then_branch: Box<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
     Null,
 }
 

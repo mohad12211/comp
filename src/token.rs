@@ -40,6 +40,8 @@ pub enum TokenKind {
     Greater,
     LessEqual,
     GreaterEqual,
+    Question,
+    Colon,
 
     // Literals.
     Identifier,
@@ -49,6 +51,8 @@ pub enum TokenKind {
     Int,
     Void,
     Return,
+    If,
+    Else,
 }
 
 #[derive(Debug, Copy, Clone)]

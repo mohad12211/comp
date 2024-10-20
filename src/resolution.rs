@@ -95,6 +95,15 @@ impl Resolver {
                 self.resolve_expr(left)?;
                 self.resolve_expr(right)?;
             }
+            Expr::Conditional {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                self.resolve_expr(condition)?;
+                self.resolve_expr(then_branch)?;
+                self.resolve_expr(else_branch)?;
+            }
         };
         Ok(())
     }
@@ -104,6 +113,17 @@ impl Resolver {
             Stmt::Return(expr) => self.resolve_expr(expr)?,
             Stmt::Expression(expr) => self.resolve_expr(expr)?,
             Stmt::Null => {}
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                self.resolve_expr(condition)?;
+                self.resolve_statement(then_branch)?;
+                if let Some(else_branch) = else_branch {
+                    self.resolve_statement(else_branch)?;
+                }
+            }
         };
         Ok(())
     }

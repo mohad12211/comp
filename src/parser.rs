@@ -150,6 +150,21 @@ impl<'de> Parser<'de> {
             Ok(Stmt::Return(return_value))
         } else if self.try_consume(TokenKind::Semicolon).is_some() {
             Ok(Stmt::Null)
+        } else if self.try_consume(TokenKind::If).is_some() {
+            self.expect(TokenKind::LeftParen)?;
+            let condition = self.expression(0)?;
+            self.expect(TokenKind::RightParen)?;
+            let then_branch = self.statement()?.into();
+            let else_branch = if self.try_consume(TokenKind::Else).is_some() {
+                Some(self.statement()?.into())
+            } else {
+                None
+            };
+            Ok(Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+            })
         } else {
             let expr = self.expression(0)?;
             self.expect(TokenKind::Semicolon)?;
@@ -224,6 +239,7 @@ impl<'de> Parser<'de> {
             TokenKind::CaretEqual => Some(1),
             TokenKind::LeftShiftEqual => Some(1),
             TokenKind::RightShiftEqual => Some(1),
+            TokenKind::Question => Some(3),
             TokenKind::DoubleBar => Some(5),
             TokenKind::DoubleAmpersand => Some(9),
             TokenKind::Bar => Some(15),
@@ -270,6 +286,15 @@ impl<'de> Parser<'de> {
                     left: left.into(),
                     right: right.into(),
                 };
+            } else if token.kind == TokenKind::Question {
+                let then_branch = self.expression(0)?.into();
+                self.expect(TokenKind::Colon)?;
+                let else_branch = self.expression(prec)?.into();
+                left = Expr::Conditional {
+                    condition: left.into(),
+                    then_branch,
+                    else_branch,
+                }
             }
         }
         Ok(left)

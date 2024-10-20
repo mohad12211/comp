@@ -36,6 +36,8 @@ impl<'de> Lexer<'de> {
             '}' => self.add_token(TokenKind::RightBrace),
             ';' => self.add_token(TokenKind::Semicolon),
             '~' => self.add_token(TokenKind::Tilde),
+            '?' => self.add_token(TokenKind::Question),
+            ':' => self.add_token(TokenKind::Colon),
             '+' if self.try_consume("+") => self.add_token(TokenKind::DoublePlus),
             '+' if self.try_consume("=") => self.add_token(TokenKind::PlusEqual),
             '+' => self.add_token(TokenKind::Plus),
@@ -145,6 +147,8 @@ impl<'de> Lexer<'de> {
             "int" => Some(TokenKind::Int),
             "void" => Some(TokenKind::Void),
             "return" => Some(TokenKind::Return),
+            "if" => Some(TokenKind::If),
+            "else" => Some(TokenKind::Else),
             _ => None,
         }
     }

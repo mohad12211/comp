@@ -257,6 +257,37 @@ impl IrcGenerator {
                 };
                 irc::Value::Var(name)
             }
+            ast::Expr::Conditional {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let condition_result = self.gen_temp();
+                let end_label = self.gen_label("ter_end");
+                let else_label = self.gen_label("ter_else");
+                let condition = self.gen_expr(*condition, instructions);
+
+                instructions.push(irc::Instruction::JumpIfZero {
+                    condition,
+                    target: else_label.clone(),
+                });
+                let v1 = self.gen_expr(*then_branch, instructions);
+                instructions.push(irc::Instruction::Copy {
+                    src: v1,
+                    dst: condition_result.clone(),
+                });
+                instructions.push(irc::Instruction::Jump {
+                    target: end_label.clone(),
+                });
+                instructions.push(irc::Instruction::Label(else_label.clone()));
+                let v2 = self.gen_expr(*else_branch, instructions);
+                instructions.push(irc::Instruction::Copy {
+                    src: v2,
+                    dst: condition_result.clone(),
+                });
+                instructions.push(irc::Instruction::Label(end_label));
+                irc::Value::Var(condition_result)
+            }
         }
     }
 
@@ -274,6 +305,49 @@ impl IrcGenerator {
                 instructions
             }
             ast::Stmt::Null => Vec::new(),
+            ast::Stmt::If {
+                condition,
+                then_branch,
+                else_branch: None,
+            } => {
+                let mut instructions = Vec::new();
+                let end_label = self.gen_label("if_end");
+                let condition = self.gen_expr(condition, &mut instructions);
+                let then_branch = self.gen_stmt(*then_branch);
+
+                instructions.push(irc::Instruction::JumpIfZero {
+                    condition,
+                    target: end_label.clone(),
+                });
+                instructions.extend(then_branch);
+                instructions.push(irc::Instruction::Label(end_label));
+                instructions
+            }
+            ast::Stmt::If {
+                condition,
+                then_branch,
+                else_branch: Some(else_branch),
+            } => {
+                let mut instructions = Vec::new();
+                let end_label = self.gen_label("if_end");
+                let else_label = self.gen_label("if_else");
+                let condition = self.gen_expr(condition, &mut instructions);
+                let then_branch = self.gen_stmt(*then_branch);
+                let else_branch = self.gen_stmt(*else_branch);
+
+                instructions.push(irc::Instruction::JumpIfZero {
+                    condition,
+                    target: else_label.clone(),
+                });
+                instructions.extend(then_branch);
+                instructions.push(irc::Instruction::Jump {
+                    target: end_label.clone(),
+                });
+                instructions.push(irc::Instruction::Label(else_label));
+                instructions.extend(else_branch);
+                instructions.push(irc::Instruction::Label(end_label));
+                instructions
+            }
         }
     }
 
