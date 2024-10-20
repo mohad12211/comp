@@ -45,6 +45,8 @@ pub enum UnaryOp {
     Not,
     PrefixInc,
     PrefixDec,
+    PostFixInc,
+    PostFixDec,
 }
 
 #[derive(Debug, Clone, Copy)]

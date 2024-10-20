@@ -158,7 +158,7 @@ impl<'de> Parser<'de> {
     }
 
     fn factor(&mut self) -> Result<Expr, ParseError> {
-        match self.tokens.first().map(|token| token.kind) {
+        let right = match self.tokens.first().map(|token| token.kind) {
             Some(TokenKind::Constant) => Ok(Expr::Constant(
                 self.expect(TokenKind::Constant)?
                     .lexeme
@@ -186,7 +186,23 @@ impl<'de> Parser<'de> {
                     .first()
                     .map_or(self.get_last_line(), |token| token.line),
             }),
-        }
+        };
+        // TODO: I don't like this
+        right.map(|right| {
+            if self.try_consume(TokenKind::DoublePlus).is_some() {
+                Expr::Unary {
+                    operator: UnaryOp::PostFixInc,
+                    right: right.into(),
+                }
+            } else if self.try_consume(TokenKind::DoubleHyphen).is_some() {
+                Expr::Unary {
+                    operator: UnaryOp::PostFixDec,
+                    right: right.into(),
+                }
+            } else {
+                right
+            }
+        })
     }
 
     fn unary(&mut self, operator: UnaryOp) -> Result<Expr, ParseError> {
