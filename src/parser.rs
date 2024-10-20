@@ -168,6 +168,8 @@ impl<'de> Parser<'de> {
             Some(TokenKind::Tilde) => self.unary(UnaryOp::Complement),
             Some(TokenKind::Hyphen) => self.unary(UnaryOp::Negate),
             Some(TokenKind::Bang) => self.unary(UnaryOp::Not),
+            Some(TokenKind::DoublePlus) => self.unary(UnaryOp::PrefixInc),
+            Some(TokenKind::DoubleHyphen) => self.unary(UnaryOp::PrefixDec),
             Some(TokenKind::LeftParen) => {
                 let _paren_token = self.consume();
                 let inner = self.expression(0)?;
@@ -195,6 +197,17 @@ impl<'de> Parser<'de> {
 
     fn precedence(token: &Token) -> Option<usize> {
         match token.kind {
+            TokenKind::Equal => Some(1),
+            TokenKind::PlusEqual => Some(1),
+            TokenKind::HyphenEqual => Some(1),
+            TokenKind::AsteriskEqual => Some(1),
+            TokenKind::ForwardSlashEqual => Some(1),
+            TokenKind::PercentEqual => Some(1),
+            TokenKind::AmpersandEqual => Some(1),
+            TokenKind::BarEqual => Some(1),
+            TokenKind::CaretEqual => Some(1),
+            TokenKind::LeftShiftEqual => Some(1),
+            TokenKind::RightShiftEqual => Some(1),
             TokenKind::DoubleBar => Some(5),
             TokenKind::DoubleAmpersand => Some(9),
             TokenKind::Bar => Some(15),
@@ -213,17 +226,6 @@ impl<'de> Parser<'de> {
             TokenKind::Asterisk => Some(50),
             TokenKind::ForwardSlash => Some(50),
             TokenKind::Percent => Some(50),
-            TokenKind::Equal => Some(1),
-            TokenKind::PlusEqual => Some(1),
-            TokenKind::HyphenEqual => Some(1),
-            TokenKind::AsteriskEqual => Some(1),
-            TokenKind::ForwardSlashEqual => Some(1),
-            TokenKind::PercentEqual => Some(1),
-            TokenKind::AmpersandEqual => Some(1),
-            TokenKind::BarEqual => Some(1),
-            TokenKind::CaretEqual => Some(1),
-            TokenKind::LeftShiftEqual => Some(1),
-            TokenKind::RightShiftEqual => Some(1),
             _ => None,
         }
     }

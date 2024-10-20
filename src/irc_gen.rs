@@ -57,6 +57,36 @@ impl IrcGenerator {
     ) -> irc::Value {
         match expr {
             ast::Expr::Constant(value) => irc::Value::Constant(value),
+            ast::Expr::Unary {
+                operator: ast::UnaryOp::PrefixDec,
+                right,
+            } => {
+                let ast::Expr::Var(name) = *right else {
+                    unreachable!("Semantic analysis")
+                };
+                instructions.push(irc::Instruction::Binary {
+                    operator: irc::BinaryOp::Subtract,
+                    src1: irc::Value::Var(name.clone()),
+                    src2: irc::Value::Constant(1),
+                    dst: name.clone(),
+                });
+                irc::Value::Var(name)
+            }
+            ast::Expr::Unary {
+                operator: ast::UnaryOp::PrefixInc,
+                right,
+            } => {
+                let ast::Expr::Var(name) = *right else {
+                    unreachable!("Semantic analysis")
+                };
+                instructions.push(irc::Instruction::Binary {
+                    operator: irc::BinaryOp::Add,
+                    src1: irc::Value::Var(name.clone()),
+                    src2: irc::Value::Constant(1),
+                    dst: name.clone(),
+                });
+                irc::Value::Var(name)
+            }
             ast::Expr::Unary { operator, right } => {
                 let src = self.gen_expr(*right, instructions);
                 let dst_var = self.gen_temp();
@@ -238,6 +268,7 @@ impl IrcGenerator {
             ast::UnaryOp::Complement => irc::UnaryOp::Complement,
             ast::UnaryOp::Negate => irc::UnaryOp::Negate,
             ast::UnaryOp::Not => irc::UnaryOp::Not,
+            ast::UnaryOp::PrefixInc | ast::UnaryOp::PrefixDec => unreachable!(),
         }
     }
 

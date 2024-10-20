@@ -43,6 +43,8 @@ pub enum UnaryOp {
     Complement,
     Negate,
     Not,
+    PrefixInc,
+    PrefixDec,
 }
 
 #[derive(Debug, Clone, Copy)]
