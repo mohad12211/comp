@@ -134,6 +134,13 @@ impl<'de> Parser<'de> {
         *token
     }
 
+    fn peek(&self, expected: &[TokenKind]) -> bool {
+        self.tokens
+            .iter()
+            .zip(expected.iter())
+            .all(|(token, &kind)| token.kind == kind)
+    }
+
     fn try_consume(&mut self, expected: TokenKind) -> Option<Token<'de>> {
         if let Some(token) = self.tokens.first().filter(|token| token.kind == expected) {
             self.tokens = &self.tokens[1..];
@@ -165,6 +172,15 @@ impl<'de> Parser<'de> {
                 then_branch,
                 else_branch,
             })
+        } else if self.try_consume(TokenKind::Goto).is_some() {
+            let label = self.expect(TokenKind::Identifier)?.lexeme;
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::Goto(label.to_string()))
+        } else if self.peek(&[TokenKind::Identifier, TokenKind::Colon]) {
+            let label = self.consume().lexeme;
+            let _colon = self.consume();
+            let stmt = self.statement()?.into();
+            Ok(Stmt::Label(label.to_string(), stmt))
         } else {
             let expr = self.expression(0)?;
             self.expect(TokenKind::Semicolon)?;

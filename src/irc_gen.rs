@@ -74,7 +74,7 @@ impl IrcGenerator {
                     operator: irc::BinaryOp::Add,
                     src1: irc::Value::Var(name.clone()),
                     src2: irc::Value::Constant(1),
-                    dst: name.clone(),
+                    dst: name,
                 });
                 dst
             }
@@ -95,7 +95,7 @@ impl IrcGenerator {
                     operator: irc::BinaryOp::Subtract,
                     src1: irc::Value::Var(name.clone()),
                     src2: irc::Value::Constant(1),
-                    dst: name.clone(),
+                    dst: name,
                 });
                 dst
             }
@@ -246,7 +246,7 @@ impl IrcGenerator {
                             dst: name.clone(),
                         });
                     }
-                    operator @ _ => {
+                    operator => {
                         instructions.push(irc::Instruction::Binary {
                             operator: Self::gen_assignment(operator),
                             src1: irc::Value::Var(name.clone()),
@@ -279,7 +279,7 @@ impl IrcGenerator {
                 instructions.push(irc::Instruction::Jump {
                     target: end_label.clone(),
                 });
-                instructions.push(irc::Instruction::Label(else_label.clone()));
+                instructions.push(irc::Instruction::Label(else_label));
                 let v2 = self.gen_expr(*else_branch, instructions);
                 instructions.push(irc::Instruction::Copy {
                     src: v2,
@@ -346,6 +346,14 @@ impl IrcGenerator {
                 instructions.push(irc::Instruction::Label(else_label));
                 instructions.extend(else_branch);
                 instructions.push(irc::Instruction::Label(end_label));
+                instructions
+            }
+            ast::Stmt::Goto(label) => {
+                vec![irc::Instruction::Jump { target: label }]
+            }
+            ast::Stmt::Label(label, stmt) => {
+                let mut instructions = vec![irc::Instruction::Label(label)];
+                instructions.extend(self.gen_stmt(*stmt));
                 instructions
             }
         }

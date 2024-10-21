@@ -6,8 +6,8 @@ use std::{
 
 use clap::Parser;
 use comp::{
-    code_emission, code_gen, irc_gen::IrcGenerator, lexer::Lexer, parser, resolution::Resolver,
-    Error, Result,
+    code_emission, code_gen, irc_gen::IrcGenerator, label_resolution::LabelResolver, lexer::Lexer,
+    parser, var_resolution::VarResolver, Error, Result,
 };
 
 /// C Compiler
@@ -70,12 +70,14 @@ fn compile(file: &str, cli: &Cli) -> Result<()> {
     if cli.parse {
         return Ok(());
     }
-    let mut resolver = Resolver::new(0);
-    resolver.resolve_program(&mut ast)?;
+    let mut var_resolver = VarResolver::new(0);
+    var_resolver.resolve_program(&mut ast)?;
+    let mut label_rsolver = LabelResolver::new(var_resolver.counter);
+    label_rsolver.resolve_program(&mut ast)?;
     if cli.validate {
         return Ok(());
     }
-    let (irc, stack_allocation) = IrcGenerator::gen_program(ast, resolver.counter);
+    let (irc, stack_allocation) = IrcGenerator::gen_program(ast, label_rsolver.counter);
     if cli.irc {
         return Ok(());
     }

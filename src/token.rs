@@ -53,6 +53,7 @@ pub enum TokenKind {
     Return,
     If,
     Else,
+    Goto,
 }
 
 #[derive(Debug, Copy, Clone)]

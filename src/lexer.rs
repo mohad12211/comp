@@ -73,7 +73,7 @@ impl<'de> Lexer<'de> {
             ' ' | '\t' => {}
             '\n' => self.line += 1,
             c if c.is_ascii_digit() => self.number()?,
-            c if c.is_alphabetic() => self.identifier(),
+            c if c.is_alphabetic() || c == '_' => self.identifier(),
             _ => {
                 return Err(Error::InvalidToken(format!(
                     "Unexpected character '{}' at line {}",
@@ -120,7 +120,7 @@ impl<'de> Lexer<'de> {
             }
             self.consume();
         }
-        if self.rest[self.len..].starts_with(|c: char| c.is_alphabetic()) {
+        if self.rest[self.len..].starts_with(|c: char| c.is_alphabetic() || c == '_') {
             return Err(Error::Lexer(format!(
                 "Invalid identifier at line {}",
                 self.line
@@ -149,6 +149,7 @@ impl<'de> Lexer<'de> {
             "return" => Some(TokenKind::Return),
             "if" => Some(TokenKind::If),
             "else" => Some(TokenKind::Else),
+            "goto" => Some(TokenKind::Goto),
             _ => None,
         }
     }

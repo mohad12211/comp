@@ -5,12 +5,12 @@ use crate::{
     Error, Result,
 };
 
-pub struct Resolver {
+pub struct VarResolver {
     pub counter: usize,
     variable_map: HashMap<String, String>,
 }
 
-impl Resolver {
+impl VarResolver {
     pub fn new(counter: usize) -> Self {
         Self {
             counter,
@@ -88,8 +88,6 @@ impl Resolver {
                 operator: _,
             } => {
                 if !matches!(left.as_ref(), Expr::Var(_)) {
-                    eprintln!("{left:?}");
-                    eprintln!("{right:?}");
                     return Err(Error::Resolver("Invalid lavlue".to_string()));
                 }
                 self.resolve_expr(left)?;
@@ -112,7 +110,6 @@ impl Resolver {
         match stmt {
             Stmt::Return(expr) => self.resolve_expr(expr)?,
             Stmt::Expression(expr) => self.resolve_expr(expr)?,
-            Stmt::Null => {}
             Stmt::If {
                 condition,
                 then_branch,
@@ -124,6 +121,8 @@ impl Resolver {
                     self.resolve_statement(else_branch)?;
                 }
             }
+            Stmt::Label(_, stmt) => self.resolve_statement(stmt)?,
+            Stmt::Goto(_) | Stmt::Null => {}
         };
         Ok(())
     }

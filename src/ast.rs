@@ -86,6 +86,8 @@ pub enum Stmt {
         else_branch: Option<Box<Stmt>>,
     },
     Null,
+    Goto(String),
+    Label(String, Box<Stmt>),
 }
 
 #[derive(Debug)]

@@ -6,10 +6,11 @@ pub mod code_emission;
 pub mod code_gen;
 pub mod irc;
 pub mod irc_gen;
+pub mod label_resolution;
 pub mod lexer;
 pub mod parser;
-pub mod resolution;
 pub mod token;
+pub mod var_resolution;
 
 #[derive(Debug)]
 pub enum Error {
