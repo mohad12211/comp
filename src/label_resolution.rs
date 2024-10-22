@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BlockItem, Function, Program, Stmt},
+    ast::{Block, BlockItem, Function, Program, Stmt},
     Result,
 };
 
@@ -26,8 +26,13 @@ impl LabelResolver {
     }
 
     fn resolve_fun(&mut self, function: &mut Function) -> Result<()> {
-        function
-            .body
+        self.resolve_block(&mut function.body)?;
+        Ok(())
+    }
+
+    fn resolve_block(&mut self, block: &mut Block) -> Result<()> {
+        block
+            .items
             .iter_mut()
             .map(|block_item| self.resolve_block_item(block_item))
             .collect::<Result<Vec<_>>>()?;
@@ -55,6 +60,7 @@ impl LabelResolver {
                     self.resolve_statement(else_branch)?;
                 }
             }
+            Stmt::Compound(block) => self.resolve_block(block)?,
             // TODO: actually implement this
             Stmt::Goto(_) => {}
             Stmt::Label(_, _) => {}

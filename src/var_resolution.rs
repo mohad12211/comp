@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::{BlockItem, Decleration, Expr, Function, Program, Stmt},
+    ast::{Block, BlockItem, Decleration, Expr, Function, Program, Stmt},
     Error, Result,
 };
 
 pub struct VarResolver {
     pub counter: usize,
-    variable_map: HashMap<String, String>,
+    variable_map: HashMap<String, (String, bool)>,
 }
 
 impl VarResolver {
@@ -17,43 +17,42 @@ impl VarResolver {
             variable_map: HashMap::new(),
         }
     }
+
     pub fn resolve_program(&mut self, program: &mut Program) -> Result<()> {
         match program {
-            Program::Function(function) => self.resolve_fun(function)?,
+            Program::Function(function) => self.resolve_fun(function),
         }
-
-        Ok(())
     }
 
     fn resolve_fun(&mut self, function: &mut Function) -> Result<()> {
-        function
-            .body
-            .iter_mut()
-            .map(|block_item| self.resolve_block_item(block_item))
-            .collect::<Result<Vec<_>>>()?;
+        self.resolve_block(&mut function.body)
+    }
+
+    fn resolve_block(&mut self, block: &mut Block) -> Result<()> {
+        for item in &mut block.items {
+            self.resolve_block_item(item)?;
+        }
         Ok(())
     }
 
     fn resolve_block_item(&mut self, block_item: &mut BlockItem) -> Result<()> {
         match block_item {
-            BlockItem::Statement(stmt) => self.resolve_statement(stmt)?,
-            BlockItem::Decleration(decleration) => {
-                self.resolve_decleration(decleration)?;
-            }
+            BlockItem::Statement(stmt) => self.resolve_statement(stmt),
+            BlockItem::Decleration(decleration) => self.resolve_decleration(decleration),
         }
-        Ok(())
     }
 
     fn resolve_decleration(&mut self, decleration: &mut Decleration) -> Result<()> {
         match decleration {
             Decleration::Decleration { name, init } => {
-                if self.variable_map.contains_key(name) {
+                if let Some((_, true)) = self.variable_map.get(name) {
                     return Err(Error::Resolver(
                         "Duplicate Variable Decleration".to_string(),
                     ));
                 }
                 let unique_name = self.make_temp(name);
-                self.variable_map.insert(name.clone(), unique_name.clone());
+                self.variable_map
+                    .insert(name.clone(), (unique_name.clone(), true));
                 if let Some(init) = init {
                     self.resolve_expr(init)?;
                 }
@@ -65,7 +64,6 @@ impl VarResolver {
 
     fn resolve_expr(&mut self, expr: &mut Expr) -> Result<()> {
         match expr {
-            Expr::Constant(_) => {}
             Expr::Unary { operator: _, right } => self.resolve_expr(right)?,
             Expr::Binary {
                 operator: _,
@@ -76,11 +74,11 @@ impl VarResolver {
                 self.resolve_expr(left)?;
             }
             Expr::Var(name) => {
-                *name = self
-                    .variable_map
-                    .get(name)
-                    .ok_or_else(|| Error::Resolver("Undeclared variable".to_string()))?
-                    .clone();
+                if let Some((unique_name, _)) = self.variable_map.get(name) {
+                    *name = unique_name.clone();
+                } else {
+                    return Err(Error::Resolver("Undeclared variable".to_string()));
+                }
             }
             Expr::Assignment {
                 left,
@@ -102,6 +100,7 @@ impl VarResolver {
                 self.resolve_expr(then_branch)?;
                 self.resolve_expr(else_branch)?;
             }
+            Expr::Constant(_) => {}
         };
         Ok(())
     }
@@ -122,9 +121,22 @@ impl VarResolver {
                 }
             }
             Stmt::Label(_, stmt) => self.resolve_statement(stmt)?,
+            Stmt::Compound(block) => {
+                let new_map = self.create_new_scope();
+                let old_map = std::mem::replace(&mut self.variable_map, new_map);
+                self.resolve_block(block)?;
+                self.variable_map = old_map;
+            }
             Stmt::Goto(_) | Stmt::Null => {}
         };
         Ok(())
+    }
+
+    fn create_new_scope(&self) -> HashMap<String, (String, bool)> {
+        self.variable_map
+            .iter()
+            .map(|(name, (unique_name, _))| (name.clone(), (unique_name.clone(), false)))
+            .collect()
     }
 
     fn make_temp(&mut self, name: &str) -> String {

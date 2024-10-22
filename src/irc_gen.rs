@@ -1,5 +1,3 @@
-use std::iter;
-
 use crate::{ast, irc};
 
 #[derive(Default)]
@@ -21,15 +19,20 @@ impl IrcGenerator {
     }
 
     fn gen_function<'a>(&mut self, function: ast::Function<'a>) -> irc::Function<'a> {
+        let mut instructions = self.gen_block(function.body);
+        instructions.push(irc::Instruction::Ret(irc::Value::Constant(0)));
         irc::Function {
             name: function.name,
-            instructons: function
-                .body
-                .into_iter()
-                .flat_map(|block_item| self.gen_block_item(block_item))
-                .chain(iter::once(irc::Instruction::Ret(irc::Value::Constant(0))))
-                .collect(),
+            instructons: instructions,
         }
+    }
+
+    fn gen_block(&mut self, block: ast::Block) -> Vec<irc::Instruction> {
+        block
+            .items
+            .into_iter()
+            .flat_map(|block_item| self.gen_block_item(block_item))
+            .collect()
     }
 
     fn gen_block_item(&mut self, block_item: ast::BlockItem) -> Vec<irc::Instruction> {
@@ -356,6 +359,7 @@ impl IrcGenerator {
                 instructions.extend(self.gen_stmt(*stmt));
                 instructions
             }
+            ast::Stmt::Compound(block) => self.gen_block(block),
         }
     }
 

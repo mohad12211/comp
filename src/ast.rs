@@ -77,6 +77,11 @@ pub enum BinaryOp {
 }
 
 #[derive(Debug)]
+pub struct Block {
+    pub items: Vec<BlockItem>,
+}
+
+#[derive(Debug)]
 pub enum Stmt {
     Return(Expr),
     Expression(Expr),
@@ -88,6 +93,7 @@ pub enum Stmt {
     Null,
     Goto(String),
     Label(String, Box<Stmt>),
+    Compound(Block),
 }
 
 #[derive(Debug)]
@@ -104,5 +110,5 @@ pub enum BlockItem {
 #[derive(Debug)]
 pub struct Function<'a> {
     pub name: &'a str,
-    pub body: Vec<BlockItem>,
+    pub body: Block,
 }

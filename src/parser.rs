@@ -1,7 +1,10 @@
 use std::fmt::Display;
 
 use crate::{
-    ast::{AssignmentOp, BinaryOp, BlockItem, Decleration, Expr, Function, Program, Stmt, UnaryOp},
+    ast::{
+        AssignmentOp, BinaryOp, Block, BlockItem, Decleration, Expr, Function, Program, Stmt,
+        UnaryOp,
+    },
     lexer::Lexer,
     token::{Token, TokenKind},
 };
@@ -78,18 +81,23 @@ impl<'de> Parser<'de> {
         self.expect(TokenKind::LeftParen)?;
         self.expect(TokenKind::Void)?;
         self.expect(TokenKind::RightParen)?;
+        let body = self.block()?;
+        Ok(Function { name, body })
+    }
+
+    fn block(&mut self) -> Result<Block, ParseError> {
         self.expect(TokenKind::LeftBrace)?;
-        let mut body = Vec::new();
+        let mut items = Vec::new();
         while self
             .tokens
             .first()
             .is_some_and(|token| !matches!(token.kind, TokenKind::RightBrace))
         {
             let block_item = self.block_item()?;
-            body.push(block_item);
+            items.push(block_item);
         }
         let _right_brace_token = self.consume();
-        Ok(Function { name, body })
+        Ok(Block { items })
     }
 
     fn block_item(&mut self) -> Result<BlockItem, ParseError> {
@@ -181,6 +189,8 @@ impl<'de> Parser<'de> {
             let _colon = self.consume();
             let stmt = self.statement()?.into();
             Ok(Stmt::Label(label.to_string(), stmt))
+        } else if self.peek(&[TokenKind::LeftBrace]) {
+            Ok(Stmt::Compound(self.block()?))
         } else {
             let expr = self.expression(0)?;
             self.expect(TokenKind::Semicolon)?;
