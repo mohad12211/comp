@@ -242,22 +242,22 @@ impl IrcGenerator {
                     unreachable!("Semantic analysis")
                 };
                 let right = self.gen_expr(*right, instructions);
-                match operator {
-                    ast::AssignmentOp::Equal => {
-                        instructions.push(irc::Instruction::Copy {
-                            src: right,
-                            dst: name.clone(),
-                        });
-                    }
-                    operator => {
+                match Self::gen_compound_assignment_operator(operator) {
+                    Some(operator) => {
                         instructions.push(irc::Instruction::Binary {
-                            operator: Self::gen_assignment(operator),
+                            operator,
                             src1: irc::Value::Var(name.clone()),
                             src2: right,
                             dst: name.clone(),
                         });
                     }
-                };
+                    None => {
+                        instructions.push(irc::Instruction::Copy {
+                            src: right,
+                            dst: name.clone(),
+                        });
+                    }
+                }
                 irc::Value::Var(name)
             }
             ast::Expr::Conditional {
@@ -375,19 +375,19 @@ impl IrcGenerator {
         label
     }
 
-    fn gen_assignment(operator: ast::AssignmentOp) -> irc::BinaryOp {
+    fn gen_compound_assignment_operator(operator: ast::AssignmentOp) -> Option<irc::BinaryOp> {
         match operator {
-            ast::AssignmentOp::Equal => unreachable!("Specially handled"),
-            ast::AssignmentOp::PlusEqual => irc::BinaryOp::Add,
-            ast::AssignmentOp::SubtractEqual => irc::BinaryOp::Subtract,
-            ast::AssignmentOp::MultipleEqual => irc::BinaryOp::Multiply,
-            ast::AssignmentOp::DivideEqual => irc::BinaryOp::Divide,
-            ast::AssignmentOp::RemainderEqual => irc::BinaryOp::Remainder,
-            ast::AssignmentOp::BitAndEqual => irc::BinaryOp::BitAnd,
-            ast::AssignmentOp::BitOrEqual => irc::BinaryOp::BitOr,
-            ast::AssignmentOp::XorEqual => irc::BinaryOp::Xor,
-            ast::AssignmentOp::RightShiftEqual => irc::BinaryOp::RightShift,
-            ast::AssignmentOp::LeftShiftEqual => irc::BinaryOp::LeftShift,
+            ast::AssignmentOp::Equal => None,
+            ast::AssignmentOp::PlusEqual => Some(irc::BinaryOp::Add),
+            ast::AssignmentOp::SubtractEqual => Some(irc::BinaryOp::Subtract),
+            ast::AssignmentOp::MultipleEqual => Some(irc::BinaryOp::Multiply),
+            ast::AssignmentOp::DivideEqual => Some(irc::BinaryOp::Divide),
+            ast::AssignmentOp::RemainderEqual => Some(irc::BinaryOp::Remainder),
+            ast::AssignmentOp::BitAndEqual => Some(irc::BinaryOp::BitAnd),
+            ast::AssignmentOp::BitOrEqual => Some(irc::BinaryOp::BitOr),
+            ast::AssignmentOp::XorEqual => Some(irc::BinaryOp::Xor),
+            ast::AssignmentOp::RightShiftEqual => Some(irc::BinaryOp::RightShift),
+            ast::AssignmentOp::LeftShiftEqual => Some(irc::BinaryOp::LeftShift),
         }
     }
 
