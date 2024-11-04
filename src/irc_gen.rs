@@ -360,6 +360,25 @@ impl IrcGenerator {
                 instructions
             }
             ast::Stmt::Compound(block) => self.gen_block(block),
+            ast::Stmt::Break { label } => todo!(),
+            ast::Stmt::Continue { label } => todo!(),
+            ast::Stmt::While {
+                condition,
+                body,
+                label,
+            } => todo!(),
+            ast::Stmt::DoWhile {
+                body,
+                condition,
+                label,
+            } => todo!(),
+            ast::Stmt::For {
+                init,
+                condition,
+                post,
+                body,
+                label,
+            } => todo!(),
         }
     }
 

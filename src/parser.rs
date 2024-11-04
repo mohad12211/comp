@@ -2,8 +2,8 @@ use std::fmt::Display;
 
 use crate::{
     ast::{
-        AssignmentOp, BinaryOp, Block, BlockItem, Decleration, Expr, Function, Program, Stmt,
-        UnaryOp,
+        AssignmentOp, BinaryOp, Block, BlockItem, Decleration, Expr, ForInit, Function, Program,
+        Stmt, UnaryOp,
     },
     lexer::Lexer,
     token::{Token, TokenKind},
@@ -119,6 +119,16 @@ impl<'de> Parser<'de> {
         Ok(Decleration::Decleration { name, init })
     }
 
+    fn for_init(&mut self) -> Result<ForInit, ParseError> {
+        if let Ok(decl) = self.decleration() {
+            Ok(ForInit::InitDecl(decl))
+        } else {
+            let expr = self.expression(0).ok();
+            self.expect(TokenKind::Semicolon)?;
+            Ok(ForInit::InitExp(expr))
+        }
+    }
+
     fn expect(&mut self, expected: TokenKind) -> Result<Token<'de>, ParseError> {
         let token = self.tokens.first();
         if token.is_some_and(|token| token.kind == expected) {
@@ -184,6 +194,49 @@ impl<'de> Parser<'de> {
             let label = self.expect(TokenKind::Identifier)?.lexeme;
             self.expect(TokenKind::Semicolon)?;
             Ok(Stmt::Goto(label.to_string()))
+        } else if self.try_consume(TokenKind::Break).is_some() {
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::Break { label: None })
+        } else if self.try_consume(TokenKind::Continue).is_some() {
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::Continue { label: None })
+        } else if self.try_consume(TokenKind::While).is_some() {
+            self.expect(TokenKind::LeftParen)?;
+            let condition = self.expression(0)?;
+            self.expect(TokenKind::RightParen)?;
+            let body = self.statement()?.into();
+            Ok(Stmt::While {
+                condition,
+                body,
+                label: None,
+            })
+        } else if self.try_consume(TokenKind::Do).is_some() {
+            let body = self.statement()?.into();
+            self.expect(TokenKind::While)?;
+            self.expect(TokenKind::LeftParen)?;
+            let condition = self.expression(0)?;
+            self.expect(TokenKind::RightParen)?;
+            self.expect(TokenKind::Semicolon)?;
+            Ok(Stmt::DoWhile {
+                body,
+                condition,
+                label: None,
+            })
+        } else if self.try_consume(TokenKind::For).is_some() {
+            self.expect(TokenKind::LeftParen)?;
+            let init = self.for_init()?;
+            let condition = self.expression(0).ok();
+            self.expect(TokenKind::Semicolon)?;
+            let post = self.expression(0).ok();
+            self.expect(TokenKind::RightParen)?;
+            let body = self.statement()?.into();
+            Ok(Stmt::For {
+                init,
+                condition,
+                post,
+                body,
+                label: None,
+            })
         } else if self.peek(&[TokenKind::Identifier, TokenKind::Colon]) {
             let label = self.consume().lexeme;
             let _colon = self.consume();

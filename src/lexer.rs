@@ -150,6 +150,11 @@ impl<'de> Lexer<'de> {
             "if" => Some(TokenKind::If),
             "else" => Some(TokenKind::Else),
             "goto" => Some(TokenKind::Goto),
+            "do" => Some(TokenKind::Do),
+            "while" => Some(TokenKind::While),
+            "for" => Some(TokenKind::For),
+            "break" => Some(TokenKind::Break),
+            "continue" => Some(TokenKind::Continue),
             _ => None,
         }
     }

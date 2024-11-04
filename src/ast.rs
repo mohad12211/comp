@@ -93,7 +93,36 @@ pub enum Stmt {
     Null,
     Goto(String),
     Label(String, Box<Stmt>),
+    Break {
+        label: Option<String>,
+    },
+    Continue {
+        label: Option<String>,
+    },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+        label: Option<String>,
+    },
+    DoWhile {
+        body: Box<Stmt>,
+        condition: Expr,
+        label: Option<String>,
+    },
+    For {
+        init: ForInit,
+        condition: Option<Expr>,
+        post: Option<Expr>,
+        body: Box<Stmt>,
+        label: Option<String>,
+    },
     Compound(Block),
+}
+
+#[derive(Debug)]
+pub enum ForInit {
+    InitDecl(Decleration),
+    InitExp(Option<Expr>),
 }
 
 #[derive(Debug)]

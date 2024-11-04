@@ -54,6 +54,11 @@ pub enum TokenKind {
     If,
     Else,
     Goto,
+    Do,
+    While,
+    For,
+    Break,
+    Continue,
 }
 
 #[derive(Debug, Copy, Clone)]

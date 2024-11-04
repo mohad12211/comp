@@ -128,6 +128,25 @@ impl VarResolver {
                 self.variable_map = old_map;
             }
             Stmt::Goto(_) | Stmt::Null => {}
+            Stmt::Break { label } => todo!(),
+            Stmt::Continue { label } => todo!(),
+            Stmt::While {
+                condition,
+                body,
+                label,
+            } => todo!(),
+            Stmt::DoWhile {
+                body,
+                condition,
+                label,
+            } => todo!(),
+            Stmt::For {
+                init,
+                condition,
+                post,
+                body,
+                label,
+            } => todo!(),
         };
         Ok(())
     }

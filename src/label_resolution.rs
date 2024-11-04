@@ -64,6 +64,25 @@ impl LabelResolver {
             // TODO: actually implement this
             Stmt::Goto(_) => {}
             Stmt::Label(_, _) => {}
+            Stmt::Break { label } => todo!(),
+            Stmt::Continue { label } => todo!(),
+            Stmt::While {
+                condition,
+                body,
+                label,
+            } => todo!(),
+            Stmt::DoWhile {
+                body,
+                condition,
+                label,
+            } => todo!(),
+            Stmt::For {
+                init,
+                condition,
+                post,
+                body,
+                label,
+            } => todo!(),
         };
         Ok(())
     }
